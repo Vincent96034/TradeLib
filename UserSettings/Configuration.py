@@ -21,9 +21,12 @@ class RunConfiguration:
         # load variables from specified .env file
         load_dotenv(config["env_path"])
 
+        # TODO: method that catches exeptions where optional usersettings parameters are not provided at all
+
         # load configurations
-        self.strategy = config["strategy"]
-        self.LM_client_id = os.environ.get("LM_client_id") or config["LM_client_id"]
-        self.LM_client_secret = os.environ.get("LM_client_secret") or config["LM_client_secret"]
+        self.strategy = config["strategy"] or "hold"
+        self.LM_data_key = os.environ.get("LM_data_key") or config["LM_data_key"]
+        self.LM_trading_key = os.environ.get("LM_trading_key") or config["LM_trading_key"]
+        self.LM_trading_type = config["LM_trading_type"] or "paper" # or live
 
         

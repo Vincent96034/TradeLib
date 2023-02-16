@@ -1,0 +1,33 @@
+GetBankStatementsResponse(
+    
+    next=None,
+    _client=<lemon.trading.api.TradingAPI object at 0x10ec7d630>,
+    _headers=None,
+    time=datetime.datetime(2023, 2, 13, 20, 43, 45, 501000, tzinfo=datetime.timezone.utc),
+    mode='paper',
+    results=[
+        BankStatement(
+            id='bst_qyMLRCCzzb5mndwJmQpt0r26c6B8MqSCsy',
+            account_id='acc_qyMLRCCssFXT8JXg7cnCSTwNPMk39FmHyb',
+            type='eod_balance', date=datetime.date(2022, 9, 7),
+            amount=1000000000,
+            isin=None,
+            isin_title=None,
+            created_at=datetime.datetime(2022, 9, 8, 15, 1, 40, 322000, tzinfo=datetime.timezone(datetime.timedelta(seconds=7200))),
+            quantity=None
+        ),
+        BankStatement(
+            id='bst_qyMMCwwKKcmDQZfTjdQGSybzmsqsDqKrff',
+            account_id='acc_qyMLRCCssFXT8JXg7cnCSTwNPMk39FmHyb',
+            type='eod_balance', date=datetime.date(2022, 9, 8),
+            amount=997171000,
+            isin=None,
+            isin_title=None,
+            created_at=datetime.datetime(2022, 9, 9, 3, 37, 6, 850000, tzinfo=datetime.timezone(datetime.timedelta(seconds=7200))),
+            quantity=None
+        )
+    ],
+    total=2,
+    page=1,
+    pages=1
+)

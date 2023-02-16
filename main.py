@@ -1,5 +1,6 @@
 from UserSettings.Configuration import RunConfiguration
 from StrategyService.Strategy import Strategy
+from TradeHandlerService.LemonClass import Lemon
 #from TradeHandlerService.trade_handler import TradeHandler
 
 
@@ -16,9 +17,12 @@ def main():
     strategy.run_strategy_wrapper()
     # OUT: strategy.weights
 
+
     # translate to trade instructions and place orders
     #trade_handler = TradeHandler(config)
     #trade_handler.restructure(strategy.weights)
+    lemon = Lemon(config)
+    lemon.get_bank_statements()
 
     # wait 30 days and repeat
     print("finished cycle")

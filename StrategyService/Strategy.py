@@ -14,4 +14,6 @@ class Strategy:
         
         strategy = strategy_factory(self.strategy_method)()
         strategy.strategy_run()
+
+        self.strategy_object = strategy
     
