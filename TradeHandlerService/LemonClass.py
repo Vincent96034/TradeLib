@@ -3,14 +3,11 @@ from lemon import api
 from typing import Optional
 import pandas as pd
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 # lemon.markets SDK: https://github.com/lemon-markets/sdk-python/
-
-'''
-# TODO: add all necessary functions
-- place order -> should also update class info like orders, positions, ...
-- ...
-'''
 
 
 class Lemon:
@@ -25,6 +22,7 @@ class Lemon:
         self.positions = None
         self.performance = None
         self.portfolio = None
+        self.portfolio_value = None
         #self.update_lemon()
 
 
@@ -137,7 +135,6 @@ class Lemon:
         order_id = order.results.id
         if activate & (order.results.status == "inactive"):
             activate_order = self.client.trading.orders.activate(order_id=order_id)
-            print(activate_order)
         return {
             "order_id": order_id, 
             "order_obj": order,
@@ -168,7 +165,6 @@ class Lemon:
         ''' xxx '''
         response = self.client.trading.orders.cancel(order_id=order_id)
         return response
-        # TODO (type hint output) 
 
 
     def get_portfolio(self) -> list:
@@ -178,9 +174,15 @@ class Lemon:
             positions.append(
                 [pos.isin, pos.isin_title, pos.quantity, pos.buy_price_avg, pos.estimated_price_total, pos.estimated_price]
             )
+        # TODO: implement with numpy (vectors, ...)?
         positions = pd.DataFrame(positions, columns = ["isin","title","quantity","buy_price_avg","estimated_price_total","estimated_price"])
-        return positions
-        # TODO: weights -> markt oder einkaufspreise? <- think about this!
+        pf_value = positions["estimated_price_total"].sum()
+        positions["w"] = positions["estimated_price_total"] / pf_value
+        portfolio = dict(zip(positions["isin"], positions["w"]))
+
+        self.portfolio = portfolio
+        self.portfolio_value = pf_value
+        return portfolio, pf_value
         # dict with isin, weight, and portfolio value
 
 
@@ -190,4 +192,4 @@ class Lemon:
         self.bank_statements = self.get_bank_statements()
         self.statements = self.get_statements()
         self.positions = self.get_positions()
-        self.portfolio = self.get_portfolio()
+        self.get_portfolio()

@@ -1,3 +1,4 @@
+from Logger.config_logger import setup_logger
 from UserSettings.Configuration import RunConfiguration
 from StrategyService.Strategy import Strategy
 from TradeHandlerService.LemonClass import Lemon
@@ -8,25 +9,25 @@ settings_source = "usersettings.json"
 
 
 def main():
+    logger = setup_logger(__name__)
 
     # e.g. get strategy setting useing config.strategy
     config = RunConfiguration(settings_source)
+    lemon = Lemon(config)
+    #data = DataService()
 
     # run strategy
-    strategy = Strategy(config)
+    strategy = Strategy(config, lemon) # data
     strategy.run_strategy_wrapper()
-    # OUT: strategy.weights
-
+    new_portfolio = strategy.weights
 
     # translate to trade instructions and place orders
     #trade_handler = TradeHandler(config)
     #trade_handler.restructure(strategy.weights)
-    lemon = Lemon(config)
-    lemon.get_bank_statements()
+
 
     # wait 30 days and repeat
-    print("finished cycle")
-
+    logger.info("Cycle ended. Standby for 30 days.")
 
 
 

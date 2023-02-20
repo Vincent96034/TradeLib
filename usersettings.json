@@ -1,5 +1,5 @@
 {
-    "strategy": "pca",
+    "strategy": "hold",
 
     "env_path": "/Users/vincenthaunberger/Documents/PYTHON/PROJECTS/TradeLib/keys.env",
 

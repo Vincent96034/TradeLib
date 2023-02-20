@@ -12,14 +12,14 @@ class RunConfiguration:
         if isinstance(dict_source, str):
             with open(dict_source) as json_file:
                 config = json.load(json_file)
-
         elif isinstance(dict_source, dict):
             config = dict_source
         else:
-            raise TypeError(f"Expecting path to .json usersettings or dics, received {type(dict_source)}.")       
+            raise TypeError(f"Expecting path to .json usersettings or dict, received {type(dict_source)}.")       
 
         # load variables from specified .env file
-        load_dotenv(config["env_path"])
+        if config["env_path"]:
+            load_dotenv(config["env_path"])
 
         # TODO: method that catches exeptions where optional usersettings parameters are not provided at all
 

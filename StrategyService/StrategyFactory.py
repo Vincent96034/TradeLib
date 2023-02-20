@@ -22,10 +22,8 @@ def strategy_factory(method: str):
     >>> print(strategy)
     None
     '''
-
     strategy_dict = {
         "pca": PCA_Strategy,
         "hold": Hold_Strategy,
     }
-
     return strategy_dict.get(method, Hold_Strategy)
