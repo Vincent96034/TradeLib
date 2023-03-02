@@ -1,8 +1,8 @@
 from Logger.config_logger import setup_logger
 from UserSettings.Configuration import RunConfiguration
-from StrategyService.Strategy import Strategy
+from StrategyService.StrategyClass import Strategy
 from TradeHandlerService.LemonClass import Lemon
-#from TradeHandlerService.trade_handler import TradeHandler
+from TradeHandlerService.TradeTranslator import TradeHandler
 
 
 settings_source = "usersettings.json"
@@ -22,9 +22,12 @@ def main():
     new_portfolio = strategy.weights
 
     # translate to trade instructions and place orders
-    #trade_handler = TradeHandler(config)
-    #trade_handler.restructure(strategy.weights)
+    trade_handler = TradeHandler(config, lemon)
+    trade_handler.create_rebalance_frame(strategy.weights)
+    trade_handler.create_trade_instructions()
 
+    # place orders
+    lemon.place_multi_order(trade_handler.trade_instructions)
 
     # wait 30 days and repeat
     logger.info("Cycle ended. Standby for 30 days.")
