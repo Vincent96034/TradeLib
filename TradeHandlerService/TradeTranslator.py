@@ -5,26 +5,51 @@ import pandas as pd
 
 
 class TradeHandler:
+    """ A class to handle portfolio rebalancing and generate trade instructions.
 
-    def __init__(self, config: RunConfiguration, lemon: Lemon):
+    Args:
+        config (RunConfiguration): An object containing the configuration for the run.
+        lemon (Lemon): An object representing the portfolio.
+
+    Attributes:
+        rebalance_frame (pd.DataFrame): A Pandas DataFrame containing the rebalanced weights,
+            the absolute old and new values for each asset, and the change in value for each asset.
+        trade_instructions (list): A list of dictionaries containing the ISIN, side ("buy" or "sell"),
+            and order amount for each trade.
+
+    Methods:
+        create_rebalance_frame(w_new: dict, add_value: float = 0) -> pd.DataFrame:
+            Rebalances the portfolio based on the old and new weights and the current portfolio value.
+        create_trade_instructions() -> list:
+            Generates a list of trade instructions based on the rebalance DataFrame.
+    """
+
+    def __init__(self,
+                 config: RunConfiguration,
+                 lemon: Lemon):
         self.config = config
         self.lemon = lemon
         self.rebalance_frame = None
         self.trade_instructions = None
 
 
-    def create_rebalance_frame(self, w_new: dict, add_value: float = 0) -> pd.DataFrame:
-        '''
-        Rebalances the portfolio based on the old and new weights and the current portfolio value.
+    def create_rebalance_frame(self,
+                               w_new: dict,
+                               add_value: float = 0
+                               ) -> pd.DataFrame:
+        """ Rebalances the portfolio based on the old and new weights and the current portfolio
+        value.
 
-        Parameters:
-        w_new (dict): A dictionary containing the new (target) weights of each asset in the portfolio.
-        add_value (float, optional): An optional parameter to add to the total value of the portfolio. Defaults to 0.
+        Args:
+            w_new (dict): A dictionary containing the new (target) weights of each asset in the
+                portfolio.
+            add_value (float, optional): An optional parameter to add to the total value of the
+                portfolio. Defaults to 0.
 
         Returns:
-        pd.DataFrame: A Pandas DataFrame containing the rebalanced weights, the absolute old and new values for each asset,
-        and the change in value for each asset.
-        '''
+            pd.DataFrame: A Pandas DataFrame containing the rebalanced weights, the absolute old
+            and new values for each asset, and the change in value for each asset.
+        """
         # pandas df for old portfolio
         pf, pf_value = self.lemon.get_portfolio()
         w_old_df = pd.DataFrame.from_dict(pf, orient = "index")
@@ -43,12 +68,19 @@ class TradeHandler:
         
 
     def create_trade_instructions(self):
-        '''
-        Generates a list of trade instructions based on the rebalance DataFrame.
+        """Generates a list of trade instructions based on the rebalance DataFrame.
 
         Returns:
-        list: A list of dictionaries containing the ISIN, side ("buy" or "sell"), and order amount for each trade.
-        '''
+        list: A list of dictionaries containing the trade instructions for each asset.
+            Each dictionary contains the following keys: 
+                - isin (str): The ISIN (International Securities Identification Number) of the asset
+                - side (str): The side of the trade, either "buy" or "sell"
+                - quantity (float): The quantity of the asset to trade
+                - quantity_type (str): The quantity type value
+        Raises:
+        TypeError: If the `rebalance_frame` attribute is not a Pandas DataFrame.
+        ValueError: If the `rebalance_frame` does not contain a 'delta' column.
+        """
         df = self.rebalance_frame
         # Input validation
         if not isinstance(df, pd.DataFrame):
@@ -58,8 +90,10 @@ class TradeHandler:
 
         # Calculate absolute values
         df["abs_delta"] = df["delta"].abs()
-        trade_instructions = [{"isin": index, "side": "buy" if row["delta"] > 0 else "sell", "quantity": abs(row["delta"]), "quantity_type": "value"} \
-                                for index, row in df.iterrows()]
+        trade_instructions = [{"isin": index,
+                               "side": "buy" if row["delta"] > 0 else "sell",
+                               "quantity": abs(row["delta"]),
+                               "quantity_type": "value"} for index, row in df.iterrows()]
         
         self.trade_instructions = trade_instructions
         return trade_instructions
