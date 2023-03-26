@@ -26,9 +26,9 @@ class TradeHandler:
         and the change in value for each asset.
         '''
         # pandas df for old portfolio
-        w_old, pf_value = self.lemon.get_portfolio()
-        w_old_df = pd.DataFrame.from_dict(w_old, orient = "index")
-        w_old_df.rename(columns = {0: "w_old"}, inplace = True)
+        pf, pf_value = self.lemon.get_portfolio()
+        w_old_df = pd.DataFrame.from_dict(pf, orient = "index")
+        w_old_df.rename(columns = {"w": "w_old"}, inplace = True)
         # pandas df for new (target portfolio)
         w_new_df = pd.DataFrame.from_dict(w_new, orient = "index")
         w_new_df.rename(columns = {0: "w_new"}, inplace = True)
@@ -58,7 +58,7 @@ class TradeHandler:
 
         # Calculate absolute values
         df["abs_delta"] = df["delta"].abs()
-        trade_instructions = [{"isin": index, "side": "buy" if row["delta"] > 0 else "sell", "order_amount": abs(row["delta"])} \
+        trade_instructions = [{"isin": index, "side": "buy" if row["delta"] > 0 else "sell", "quantity": abs(row["delta"]), "quantity_type": "value"} \
                                 for index, row in df.iterrows()]
         
         self.trade_instructions = trade_instructions

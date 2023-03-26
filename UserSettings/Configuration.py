@@ -21,7 +21,7 @@ class RunConfiguration:
         if config["env_path"]:
             load_dotenv(config["env_path"])
 
-        # TODO: method that catches exeptions where optional usersettings parameters are not provided at all
+        # TODO: method that catches exeptions where non-optional usersettings arguments are not provided at all
 
         # load configurations
         self.strategy = config["strategy"] or "hold"
