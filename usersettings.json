@@ -12,7 +12,5 @@
         "LM_data_key": "",
         "LM_trading_key": "",
         "LM_trading_type": ""
-    },
-
-    "logging": {}
+    }
 }

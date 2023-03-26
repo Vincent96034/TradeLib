@@ -4,14 +4,18 @@ from UserSettings.Configuration import RunConfiguration
 
 
 def setup_logger(name: str,
-                config: RunConfiguration
+                 log_path: Optional[Union[str, bool]] = None,
+                 console_output: bool = True,
+                 level: str = "INFO"
                 ) -> logging.Logger:
     """ Sets up and configures a logger object with the specified name,
     log file path, and logging level.
 
     Args:
         name (str): The name of the logger.
-        config (RunConfiguration): The configuration object.
+        log_path (str): The directory path to store the log file. Defaults to None. If set to True the default path will be used.
+        console_output (bool): If logs should be printed to the console. Defaults to True.
+        level (str): The logging level for the logger. Defaults to "INFO".
 
     Returns:
         logging.Logger: The configured logger object.
@@ -25,11 +29,10 @@ def setup_logger(name: str,
         "CRITICAL": logging.CRITICAL
     }
 
-    formatter = logging.Formatter(config.log_format)
+    formatter = logging.Formatter("%(asctime)s :: [%(name)s - %(levelname)s] :: %(message)s")
     logger = logging.getLogger(name)
-    logger.setLevel(logging_level_switch[config.log_level])
+    logger.setLevel(logging_level_switch[level])
 
-    log_path = config.log_path
     if log_path:
         if log_path == True:
             log_path = f"Logger/Logs/{name}.log"
@@ -37,9 +40,7 @@ def setup_logger(name: str,
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
 
-    if config.log_console_output:
+    if console_output:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
-
-    return logger

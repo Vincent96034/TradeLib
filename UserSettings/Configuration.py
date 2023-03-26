@@ -33,13 +33,6 @@ class RunConfiguration:
         self.LM_trading_type = config["lemon.markets"].get("LM_trading_type") or "paper" # or live
         self._check_LM_settings()
 
-        # load logging-configurations
-        self.log_path = config["logging"].get("log_path") or False
-        self.log_level = config["logging"].get("log_level") or "INFO"
-        self.log_format = config["logging"].get("log_format") or "%(asctime)s :: [%(name)s - %(levelname)s] :: %(message)s"
-        self.log_console_output = config["logging"].get("log_console_output") or True
-        self._check_logging_settings()
-
     
     def _check_strategy_settings(self) -> None:
         """ Function to check if strategy-settings are valid. """
@@ -62,17 +55,4 @@ class RunConfiguration:
         if self.LM_trading_type not in valid_trading_types:
             raise ValueError(f"""LM_trading_type must be one of {valid_trading_types},
             received {self.LM_trading_type}.""")
-        
-
-    def _check_logging_settings(self):
-        """ Function to check if logging-configurations are valid. """
-        if not isinstance(self.log_path, (str, bool)):
-            raise TypeError(f"log_path must be a string or boolean, received {type(self.log_path)}.")
-        valid_log_levels = ["NOTSET", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        if self.log_level not in valid_log_levels:
-            raise ValueError(f"""log_level must be one of {valid_log_levels}, received {self.log_level}.""")
-        if not isinstance(self.log_format, str):
-            raise TypeError(f"log_format must be a string, received {type(self.log_format)}.")
-        if not isinstance(self.log_console_output, bool):
-            raise TypeError(f"log_console_output must be a boolean, received {type(self.log_console_output)}.")
         

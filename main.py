@@ -11,12 +11,12 @@ settings_source = "usersettings.json"
 def main():
     logger = setup_logger(__name__)
 
-    # e.g. get strategy setting useing config.strategy
     config = RunConfiguration(settings_source)
     lemon = Lemon(config)
     #data = DataService()
 
     # run strategy
+    config.strategy = "hold"
     strategy = Strategy(config, lemon) # data
     strategy.run_strategy_wrapper()
     new_portfolio = strategy.weights
