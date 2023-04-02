@@ -1,10 +1,13 @@
-from TradeHandlerService.LemonClass import Lemon
-from UserSettings.Configuration import RunConfiguration
 import pandas as pd
 
+from TradeHandlerService.LemonClass import Lemon
+from UserSettings.Configuration import RunConfiguration
+from Logger.config_logger import setup_logger
+logger = setup_logger(__name__)
 
 
-class TradeHandler:
+
+class TradeHandler(Lemon):
     """ A class to handle portfolio rebalancing and generate trade instructions.
 
     Args:
@@ -56,7 +59,7 @@ class TradeHandler:
         w_old_df.rename(columns = {"w": "w_old"}, inplace = True)
         # pandas df for new (target portfolio)
         w_new_df = pd.DataFrame.from_dict(w_new, orient = "index")
-        w_new_df.rename(columns = {0: "w_new"}, inplace = True)
+        w_new_df.rename(columns = {"w": "w_new"}, inplace = True)
         
         df = pd.concat([w_old_df, w_new_df], axis=1).fillna(0)
         df["abs_old"] = df.loc[:,"w_old"] * pf_value
@@ -68,7 +71,7 @@ class TradeHandler:
         
 
     def create_trade_instructions(self):
-        """Generates a list of trade instructions based on the rebalance DataFrame.
+        """ Generates a list of trade instructions based on the rebalance DataFrame.
 
         Returns:
         list: A list of dictionaries containing the trade instructions for each asset.

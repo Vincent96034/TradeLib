@@ -1,18 +1,16 @@
-from __future__ import annotations
-
-from UserSettings.Configuration import RunConfiguration
+import pandas as pd
 from lemon import api
 from typing import Optional, Union
 from decimal import Decimal, ROUND_HALF_UP
-import pandas as pd
 
-import logging
-logger = logging.getLogger(__name__)
-# lemon.markets SDK: https://github.com/lemon-markets/sdk-python/
+from UserSettings.Configuration import RunConfiguration
+from Logger.config_logger import setup_logger
+logger = setup_logger(__name__)
 
 
 class Lemon:
-    """ A wrapper class for accessing the LemonMarkets API.
+    """ A wrapper class for accessing the LemonMarkets API, using the
+    lemon.markets SDK: https://github.com/lemon-markets/sdk-python/
 
     Args:
         config (RunConfiguration): A RunConfiguration object containing the required
@@ -188,9 +186,9 @@ class Lemon:
                 order_amount = amount_available
 
         if order_amount <= 0:
-            logger.warning(f"""Order quantity {order_amount} of {isin} is less than or equal to zero.
+            logger.warning(f"""Order quantity {order_amount} of {isin} is less than or equal to zero. 
                 Order will be dismissed.""")
-            return {}
+            return
 
         order = self.client.trading.orders.create(
             isin=isin,
@@ -313,7 +311,7 @@ class Lemon:
                 idempotency=order.get("idempotency")
             )
             order_responses.append(order_response)
-        logger.info(f"Created {len(order_list)} orders.")
+        logger.info(f"Created {len([x for x in order_responses if x is not None])} orders.")
         return order_responses
 
 

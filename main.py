@@ -19,7 +19,6 @@ def main():
     config.strategy = "hold"
     strategy = Strategy(config, lemon) # data
     strategy.run_strategy_wrapper()
-    new_portfolio = strategy.weights
 
     # translate to trade instructions and place orders
     trade_handler = TradeHandler(config, lemon)

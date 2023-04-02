@@ -1,8 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from UserSettings.Configuration import RunConfiguration
-    from TradeHandlerService.LemonClass import Lemon
+from UserSettings.Configuration import RunConfiguration
+from TradeHandlerService.LemonClass import Lemon
 
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)

@@ -1,10 +1,9 @@
 import logging
 from typing import Optional, Union
-from UserSettings.Configuration import RunConfiguration
 
 
 def setup_logger(name: str,
-                 log_path: Optional[Union[str, bool]] = None,
+                 log_path: Optional[Union[str, bool]] = False,
                  console_output: bool = True,
                  level: str = "INFO"
                 ) -> logging.Logger:

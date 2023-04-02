@@ -4,7 +4,6 @@ from typing import Union
 from dotenv import load_dotenv
 
 
-
 class RunConfiguration:
     """ RunConfiguration class is used to load usersettings and variables from.json file.
     When the class is initialized, it will load the usersettings from the.json file and 
