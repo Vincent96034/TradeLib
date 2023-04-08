@@ -3,12 +3,13 @@ from lemon import api
 from typing import Optional, Union
 from decimal import Decimal, ROUND_HALF_UP
 
+from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
 from UserSettings.Configuration import RunConfiguration
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 
 
-class Lemon:
+class Lemon(TradeBackend):
     """ A wrapper class for accessing the LemonMarkets API, using the
     lemon.markets SDK: https://github.com/lemon-markets/sdk-python/
 
@@ -18,27 +19,16 @@ class Lemon:
 
     Attributes:
         client (lemon.markets.api.LemonMarkets): An API client for accessing LemonMarkets.
-        bank_statements (list): A list of bank statements as BankStatement objects.
-        statements (list): A list of position statements as Statement objects.
-        positions (list): A list of Positions as Position objects.
-        performance (list): A list of Performance objects.
-        portfolio (list): A list of Portfolio objects.
-        portfolio_value (float): The total value of the portfolio.
     """
-    def __init__(self, config: RunConfiguration) -> None:
-        self.config = config
+    def __init__(self,
+                 LM_data_key: str,
+                 LM_trading_key: str,
+                 LM_trading_type: str) -> None:
         self.client = api.create(
-            market_data_api_token=config.LM_data_key,
-            trading_api_token=config.LM_trading_key,
-            env=config.LM_trading_type)
-        self.bank_statements = None
-        self.statements = None
-        self.positions = None
-        self.performance = None
-        self.portfolio = None
-        self.portfolio_value = None
-        self.account = None
-        self.update_lemon()
+            market_data_api_token=LM_data_key,
+            trading_api_token=LM_trading_key,
+            env=LM_trading_type
+        )
 
 
     def get_bank_statements(self,
@@ -66,7 +56,6 @@ class Lemon:
         response = self.client.trading.account.get_bank_statements(
             type = type_,
             from_ = from_)
-        self.bank_statements = response.results
         return response.results
 
 
@@ -78,13 +67,10 @@ class Lemon:
             list: A list of Statement objects.
         """
         response = self.client.trading.positions.get_statements()
-        self.statements = response.results
         return response.results
     
-
-    def get_positions(self,
-        isin: Optional[str] = None
-        ) -> list:
+    
+    def get_positions(self, isin: Optional[str] = None) -> list:
         """ Returns a list of Positions as Position objects.
 
         Args:
@@ -93,10 +79,36 @@ class Lemon:
         Returns:
             list: A list of Position objects.
         """
-        response = self.client.trading.positions.get(
-            isin = isin)
-        self.positions = response.results
-        return response.results
+        positions = self.client.trading.positions.get(isin = isin).results
+        return [self._create_position_object(
+            position.isin,
+            position.quantity,
+            position.buy_price_avg,
+            position.estimated_price,
+            position.isin_title
+        ) for position in positions]
+    
+
+    def get_trades(self, isin: Optional[str] = None) -> list:
+        """ Retrieves all trading orders placed by the user.
+
+        Args:
+            isin (Optional[str], optional): isin of position. Defaults to None.
+
+        Returns:
+            list: A list containing the order objects for all placed orders.
+        """
+        trades = self.client.trading.orders.get(isin = isin)
+        return [self._create_trade_object(
+            trade.id,
+            trade.isin,
+            trade.created_at,
+            trade.quantity,
+            trade.estimated_price,
+            trade.expires_at,
+            trade.isin_title,
+            trade.status
+        ) for trade in trades.auto_iter()]
 
 
     def get_performance(self,
@@ -124,7 +136,6 @@ class Lemon:
             from_ = from_,
             to = to,
             sorting = sorting)
-        self.performance = response.results
         return response.results
     
 
@@ -133,7 +144,8 @@ class Lemon:
         side: str,
         quantity: Union[int, float],
         quantity_type: str,
-        activate = False,
+        pf_dict: dict,
+        activate: bool = False,
         **kwargs,
         ) -> dict:
         """ Places a trading order for a given ISIN with the specified side and quantity.
@@ -180,7 +192,7 @@ class Lemon:
             order_amount = self.value_to_amount(isin=isin, side=side, value=quantity)
 
         if side == "sell": # check if portfolio holds enough of stock
-            amount_available = self.portfolio.get(isin)["quantity"]
+            amount_available = pf_dict.get(isin)["quantity"]
             if order_amount > amount_available:
                 logger.warning(f"""Order quantity {order_amount} of {isin} exceeds available amount {amount_available}.
                     Order quantity will be adjusted to maximum available amount.""")
@@ -228,17 +240,6 @@ class Lemon:
         return order_status.results
 
 
-    def get_all_orders(self) -> list:
-        """ Retrieves all trading orders placed by the user.
-
-        Returns:
-            list: A list containing the order objects for all placed orders.
-        """
-        response = self.client.trading.orders.get()
-        # auto_iter: iterate over all orders of all pages
-        return [order for order in response.auto_iter()]
-
-
     def cancel_order(self, order_id: str):
         """ Cancels a trading order with the specified order ID.
 
@@ -249,32 +250,9 @@ class Lemon:
         return response
 
 
-    def get_portfolio(self) -> list:
-        """ Retrieves the user's portfolio and its total value.
-
-        Returns:
-            Tuple[Dict[str, Dict[str, float]], float]: A tuple containing a dictionary
-                with the user's portfolio where each key is an ISIN and the value is a
-                dictionary with the keys "quantity", "buy_price_avg", "estimated_price_total",
-                "estimated_price", and "w", and the total value of the portfolio.
-        """
-        positions = []
-        for pos in self.get_positions():
-            positions.append(
-                [pos.isin, pos.quantity, pos.buy_price_avg, pos.estimated_price_total, pos.estimated_price]
-            )
-        positions = pd.DataFrame(positions, columns = ["isin","quantity","buy_price_avg","estimated_price_total","estimated_price"])
-        pf_value = positions["estimated_price_total"].sum()
-        positions["w"] = positions["estimated_price_total"] / pf_value
-        portfolio = positions.set_index(["isin"]).to_dict(orient="index")
-
-        self.portfolio = portfolio
-        self.portfolio_value = pf_value
-        return portfolio, pf_value
-
-
     def place_multi_order(self,
         order_list: list,
+        pf_dict: dict,
         activate: bool = True,
         ) -> dict:
         """ Creates multiple orders from a list of dictionaries.
@@ -304,6 +282,7 @@ class Lemon:
                 side=order.get("side"),
                 quantity=order.get("quantity"),
                 quantity_type=order.get("quantity_type"),
+                pf_dict=pf_dict,
                 activate=activate or order.get("activate"),
                 expires_at=order.get("expires_at"),
                 stop_price=order.get("stop_price"),
@@ -381,36 +360,3 @@ class Lemon:
         if not isinstance(amount, (int, float)):
             raise TypeError("Amount must be a float or int value.")
         return int(amount * 10_000)
-
-
-    def update_lemon(self):
-        """
-        Updates account data of Lemon object by calling the following methods:
-        - get_performance
-        - get_bank_statements
-        - get_statements
-        - get_positions
-        - get_portfolio
-
-        Returns: None
-        """
-        self.get_performance()
-        self.get_bank_statements()
-        self.get_statements()
-        self.get_positions()
-        self.get_portfolio()
-        logger.info(f"Updated Lemon object attributes.")
-
-
-    def init_account(self):
-        self.account = LemonAccount(config = self.config)
-
-
-
-
-class LemonAccount(Lemon):
-    def __init__(self, config: RunConfiguration):
-        super().__init__(config)
-
-    def test(self):
-        return self.config

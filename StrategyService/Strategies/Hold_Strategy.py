@@ -10,6 +10,6 @@ class Hold_Strategy:
 
     def strategy_run(self) -> dict:
         ''' Generic function for every strategy class: runs strategy '''
-        w = self.StrategyCls.lemon.get_portfolio()
+        w = self.StrategyCls.portfolio.get_portfolio()
         self.weights = w[0]
         return w
