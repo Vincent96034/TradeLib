@@ -25,8 +25,8 @@ class Lemon:
         portfolio (list): A list of Portfolio objects.
         portfolio_value (float): The total value of the portfolio.
     """
-    
     def __init__(self, config: RunConfiguration) -> None:
+        self.config = config
         self.client = api.create(
             market_data_api_token=config.LM_data_key,
             trading_api_token=config.LM_trading_key,
@@ -37,6 +37,7 @@ class Lemon:
         self.performance = None
         self.portfolio = None
         self.portfolio_value = None
+        self.account = None
         self.update_lemon()
 
 
@@ -362,7 +363,7 @@ class Lemon:
             int: The amount of stocks that correspond to the given value.
         """
         quote_obj = self.get_latest_data(isin = isin)
-        price = quote_obj.a if side == "buy" else quote_obj.b
+        price = quote_obj.a if side == "buy" else quote_obj.b # ask or bid
         return int(Decimal(value/self.convert_to_hcents(price)).quantize(0, ROUND_HALF_UP))
 
 
@@ -382,7 +383,7 @@ class Lemon:
         return int(amount * 10_000)
 
 
-    def update_lemon(self): # TODO
+    def update_lemon(self):
         """
         Updates account data of Lemon object by calling the following methods:
         - get_performance
@@ -399,3 +400,17 @@ class Lemon:
         self.get_positions()
         self.get_portfolio()
         logger.info(f"Updated Lemon object attributes.")
+
+
+    def init_account(self):
+        self.account = LemonAccount(config = self.config)
+
+
+
+
+class LemonAccount(Lemon):
+    def __init__(self, config: RunConfiguration):
+        super().__init__(config)
+
+    def test(self):
+        return self.config

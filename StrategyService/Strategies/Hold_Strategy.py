@@ -1,9 +1,4 @@
-from __future__ import annotations
-
 from StrategyService.StrategyClass import Strategy
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 class Hold_Strategy:

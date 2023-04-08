@@ -24,6 +24,7 @@ class RunConfiguration:
 
         # load strategy-configurations
         self.strategy = config["strategy"].get("name") or "hold"
+        self.strategy_params = config["strategy"].get("params") or {}
         self._check_strategy_settings()
 
         # load lemon.markets-configurations
@@ -38,6 +39,10 @@ class RunConfiguration:
         valid_strategies = ["hold", "pca"]
         if self.strategy not in valid_strategies:
             raise ValueError(f"Invalid strategy: {self.strategy}. Valid strategies are: {valid_strategies}")
+        if self.strategy_params is None:
+            raise ValueError("`strategy_params` can not be None.")
+        elif not isinstance(self.strategy_params, dict):
+            raise TypeError("`strategy_params` must be a dictionary.")
         
     
     def _check_LM_settings(self):

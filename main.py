@@ -5,23 +5,26 @@ from TradeHandlerService.LemonClass import Lemon
 from TradeHandlerService.TradeTranslator import TradeHandler
 
 
-settings_source = "usersettings.json"
-
 
 def main():
     logger = setup_logger(__name__)
 
+    settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
+    
     lemon = Lemon(config)
     #data = DataService()
 
     # run strategy
     config.strategy = "hold"
-    strategy = Strategy(config, lemon) # data
+    strategy = Strategy(strategy_name = config.strategy,
+                        strategy_params=config.strategy_params,
+                        lemon = lemon)
     strategy.run_strategy_wrapper()
 
     # translate to trade instructions and place orders
-    trade_handler = TradeHandler(config, lemon)
+    trade_handler = TradeHandler(config = config,
+                                 lemon = lemon)
     trade_handler.create_rebalance_frame(strategy.weights)
     trade_handler.create_trade_instructions()
 
