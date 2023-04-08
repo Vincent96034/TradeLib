@@ -1,16 +1,16 @@
-from TradeHandlerService.LemonClass import Lemon
+from TradeHandlerService.TradeData import Portfolio
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 
 
 class Strategy:
 
-    def __init__(self, strategy_name, strategy_params, lemon: Lemon):
+    def __init__(self, strategy_name: str, strategy_params: dict, portfolio: Portfolio):
         self.strategy_name = strategy_name
         self.strategy_params = strategy_params
         self.strategy_object = None
         self.weights = {}
-        self.lemon = lemon
+        self.portfolio = portfolio
     
 
     def run_strategy_wrapper(self):
@@ -19,7 +19,7 @@ class Strategy:
         strategy.strategy_run()
         self.strategy_object = strategy
         self.weights = strategy.weights
-        logger.info(f"Ran strategy: {strategy.__class__}")
+        logger.info(f"Ran strategy: {self.strategy_name}")
 
 
 
