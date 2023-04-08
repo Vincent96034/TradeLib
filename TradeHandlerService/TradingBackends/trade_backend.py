@@ -10,6 +10,12 @@ class TradeBackend:
     def get_trades(self):
         raise NotImplementedError("`get_trades` is not implemented.")
 
+    def place_order(self):
+        raise NotImplementedError("`place_order` is not implemented.")
+    
+    def place_multi_order(self):
+        raise NotImplementedError("`place_multi_order` is not implemented.")
+    
     @staticmethod
     def _create_position_object(
         isin: str,
