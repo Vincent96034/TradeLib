@@ -9,6 +9,7 @@ logger = setup_logger(__name__)
 
 class YFinance(DataService):
     def __init__(self):
+        super().__init__()
         self.name = "Yahoo Finance"
         self.homepage = "https://finance.yahoo.com/"
         self.data_category = "Financial"
@@ -18,7 +19,6 @@ class YFinance(DataService):
                 " refer to Yahoo!'s terms of use for details on your"\
                 " rights to use the actual data downloaded "\
                 " (https://legal.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.html).")
-        super().__init__()
 
 
     def create_tickers(self, ticker_symbols: list, session = None) -> dict:
