@@ -35,8 +35,7 @@ class YFinance(DataService):
         """
         if not isinstance(ticker_symbols, list):
             raise TypeError("`ticker_symbols` must be of type list.")
-        non_valid_symbols = [symbol for symbol in ticker_symbols if not isinstance(symbol, str)]
-        if non_valid_symbols:
+        if non_valid_symbols := [symbol for symbol in ticker_symbols if not isinstance(symbol, str)]:
             raise TypeError("Not all symbols in `ticker_symbols` are of type string. The following"\
                             f" non valid symbols have been provided: {non_valid_symbols}")
         try:
@@ -85,8 +84,7 @@ class YFinance(DataService):
         """
         if not isinstance(ticker_symbols, list):
             raise TypeError("`ticker_symbols` must be of type list.")
-        non_valid_symbols = [symbol for symbol in ticker_symbols if not isinstance(symbol, str)]
-        if non_valid_symbols:
+        if non_valid_symbols := [symbol for symbol in ticker_symbols if not isinstance(symbol, str)]:
             raise TypeError("Not all symbols in `ticker_symbols` are of type string. The following"\
                             f" non valid symbols have been provided: {non_valid_symbols}")
         if not isinstance(kwargs.get('start'), (str, type(None))):
@@ -110,8 +108,7 @@ class YFinance(DataService):
         """
         if not isinstance(tickers, dict):
             raise TypeError("`ticker_symbols` must be of type dict.")
-        non_valid = [tickers[ticker] for ticker in tickers if not isinstance(tickers[ticker], yf.Ticker)]
-        if non_valid:
+        if non_valid := [tickers[ticker] for ticker in tickers if not isinstance(tickers[ticker], yf.Ticker)]:
             raise TypeError("Not all symbols in `tickers` are of type yf.Ticker; The following"\
                             f" non valid tickers have been provided: {non_valid}")
         return {symb: (tickers[symb].isin if tickers[symb].isin != "-" else "") for symb in tickers}

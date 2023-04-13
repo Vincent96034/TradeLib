@@ -9,6 +9,8 @@ __pycache__/
 
 # Distribution / packaging
 venv/
+pyvenv.cfg
+myenv/
 bin/
 build/
 develop-eggs/
