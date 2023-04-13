@@ -1,7 +1,8 @@
 import requests_cache
 import yfinance as yf
 import pandas as pd
-from typing import Optional, Union
+from typing import Union
+
 from DataService.DataService import DataService
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
