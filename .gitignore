@@ -4,6 +4,7 @@ dev.ipynb
 dev2.ipynb
 /Logger/Logs/
 temp/
+DS_store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
