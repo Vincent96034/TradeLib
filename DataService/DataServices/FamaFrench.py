@@ -19,6 +19,7 @@ class FamaFrench(DataService):
         self.data_category = "Financial"
         self.data_types = ["monthly", "factors"]
         self._ff_df = pd.DataFrame()
+        self.latest_date = None
 
     def _download_and_prepare_data(self) -> None:
         """ Downloads Fama & French data from the web and prepares it for further processing.
@@ -53,6 +54,7 @@ class FamaFrench(DataService):
         ff_factors.index = ff_factors.index + pd.offsets.MonthEnd()
         ff_factors = ff_factors.apply(lambda x: x/ 100)
         self._ff_df = ff_factors
+        self.latest_date = str(ff_factors.index[-1].date())
 
     def famafrench_data_historic(self,
                                  start: Union[None, str] = None,
@@ -61,25 +63,25 @@ class FamaFrench(DataService):
         """ Retrieves historic Fama & French data in the specified date range, or the
         entire dataset if no date range is specified.
 
-            Args:
-                self: Instance of the class.
-                start: Start date of the desired date range in 'YYYY-MM-DD' format.
-                    Defaults to None.
-                stop: End date of the desired date range in 'YYYY-MM-DD' format.
-                    Defaults to None.
-                update: If True, downloads and updates the Fama & French data before
-                    returning the results. Defaults to False.
+        Args:
+            self: Instance of the class.
+            start: Start date of the desired date range in 'YYYY-MM-DD' format.
+                Defaults to None.
+            stop: End date of the desired date range in 'YYYY-MM-DD' format.
+                Defaults to None.
+            update: If True, downloads and updates the Fama & French data before
+                returning the results. Defaults to False.
 
-            Returns:
-                A pandas DataFrame containing the Fama & French data in the specified
-                date range, or the entire dataset if no date range is specified.
+        Returns:
+            A pandas DataFrame containing the Fama & French data in the specified
+            date range, or the entire dataset if no date range is specified.
 
-            Example Ouput:
-                        Mkt-RF	SMB	    HML	    RF
-            date				
-            1926-07-31	0.0296	-0.0256	-0.0243	0.0022
-            1926-08-31	0.0264	-0.0117	0.0382	0.0025
-            1926-09-30	0.0036	-0.0140	0.0013	0.0023
+        Example Ouput:
+                    Mkt-RF	SMB	    HML	    RF
+        date				
+        1926-07-31	0.0296	-0.0256	-0.0243	0.0022
+        1926-08-31	0.0264	-0.0117	0.0382	0.0025
+        1926-09-30	0.0036	-0.0140	0.0013	0.0023
         """
         if start:
             self._validate_date(start)
