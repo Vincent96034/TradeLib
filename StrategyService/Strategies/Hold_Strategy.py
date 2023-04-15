@@ -11,7 +11,7 @@ class Hold_Strategy(Strategy):
         self.portfolio = portfolio
 
     def strategy_run(self) -> dict:
-        ''' Run buy-and-hold strategy '''
+        ''' Run buy-and-hold strategy. '''
         w = self.portfolio.get_portfolio()
         self.weights = w[0]
         return w
