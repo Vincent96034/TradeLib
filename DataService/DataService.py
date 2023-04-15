@@ -41,6 +41,32 @@ class DataService:
         return f"<DataService: {self.name} ({self.homepage}) - Category {self.data_category}>"
 
 
+class FinancialDataService(DataService):
+    def __init__(self):
+        super().__init__()
+    
+    def get_constituents(self, exchange: str):    
+        """ Get the list of constituents for a given exchange.
+
+        Args:
+        exchange (str): The name of the exchange for which the constituents are requested.
+            Only "S&P500" and "NASDAQ100" are supported.
+
+        Returns:
+        list: A list of stock symbols that represent the constituents of the specified exchange.
+        """
+        if not isinstance(exchange, str):
+            raise TypeError("`exchange` must be of type str.")
+        if exchange == "S&P500":
+            constituents=pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]["Symbol"]
+        elif exchange == "NASDAQ100":
+            constituents=pd.read_html('https://en.wikipedia.org/wiki/Nasdaq-100')[4]["Ticker"]
+        else:
+            raise NotImplementedError(f"Exchange {exchange} is not implemented.")
+        return list(constituents)
+
+
+
 
 # To be Implemented:
 # - YFinance
