@@ -21,6 +21,7 @@ def main():
     )
 
     # run strategy
+    # TODO: update this to reflect new strategy setup
     config.strategy = "hold"
     strategy = Strategy(strategy_name = config.strategy,
                         strategy_params=config.strategy_params,
