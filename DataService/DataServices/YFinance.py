@@ -3,12 +3,12 @@ import yfinance as yf
 import pandas as pd
 from typing import Union
 
-from DataService.DataService import DataService
+from DataService.DataService import FinancialDataService
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 
 
-class YFinance(DataService):
+class YFinance(FinancialDataService):
     def __init__(self):
         super().__init__()
         self.name = "Yahoo Finance"
@@ -49,8 +49,8 @@ class YFinance(DataService):
             return request
 
 
-    @DataService.check_output_frame
-    def ticker_data_historic(self, ticker_symbols: list, **kwargs) -> pd.DataFrame:
+    @FinancialDataService.check_output_frame
+    def ticker_data_historic(self, ticker_symbols: list, pct_change: bool = False, **kwargs) -> pd.DataFrame:
         """ Returns historic data for the given ticker symbols.
 
             Args:
@@ -93,8 +93,13 @@ class YFinance(DataService):
         if not isinstance(kwargs.get('end'), (str, type(None))):
             raise TypeError("`end` must be of type string in the format YYYY-MM-DD.")
         # kwargs specified in yf.download()
-        return yf.download(ticker_symbols, **kwargs)
-
+        df = yf.download(ticker_symbols, **kwargs)
+        if pct_change:
+            for col_tuple in df.columns:
+                df.loc[:, col_tuple] = df.loc[:, col_tuple].pct_change()
+            df = df.iloc[1:] # remove first row (nan)
+        return df
+    
 
     def symbol_to_isin(self, tickers: dict) -> dict:
         """ Returns a dictionary of ISIN codes for the given ticker symbols.

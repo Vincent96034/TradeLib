@@ -30,28 +30,27 @@ class FamaFrench(DataService):
         """
         try:
             logger.info("Downloading `Fama & French` data from the web ...")
-            ff_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip"
+            ff_url = "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_daily_CSV.zip"
             urllib.request.urlretrieve(ff_url,'DataService/DataServices/temp/fama_french.zip')
         except URLError as url_e:
             logger.error(f"An URL-Error occured when downloading `Fama & French` data: {url_e}")
         # open zip file in temp folder, create .csv, create pandas df, delete files again
         with zipfile.ZipFile('DataService/DataServices/temp/fama_french.zip', 'r') as z_file:
             z_file.extractall("DataService/DataServices/temp/")
-            ff_factors =  pd.read_csv('DataService/DataServices/temp/F-F_Research_Data_Factors.csv', skiprows = 3)
+            ff_factors =  pd.read_csv('DataService/DataServices/temp/F-F_Research_Data_Factors_daily.CSV', skiprows = 4)
         try:
             os.remove('DataService/DataServices/temp/fama_french.zip')
-            os.remove('DataService/DataServices/temp/F-F_Research_Data_Factors.csv')
+            os.remove('DataService/DataServices/temp/F-F_Research_Data_Factors_daily.CSV')
         except OSError as e:
             logger.error(f"Could not delete temp files of `Fama & French` data.")
         # process df
         ff_factors = ff_factors.rename(columns={"Unnamed: 0": "date"})
         ff_factors["date"] = pd.to_numeric(ff_factors["date"], errors="coerce")
-        ff_factors = ff_factors[ff_factors["date"] > 99999] # remove annual data
+        ff_factors = ff_factors[ff_factors["date"] > 9999999] # remove annual data
         ff_factors = ff_factors.astype({"date": int, "Mkt-RF": float, "SMB": float, "HML": float, "RF": float})
         ff_factors.index = ff_factors["date"]
         ff_factors = ff_factors.drop(labels="date", axis="columns")
-        ff_factors.index = pd.to_datetime(ff_factors.index, format= '%Y%m')
-        ff_factors.index = ff_factors.index + pd.offsets.MonthEnd()
+        ff_factors.index = pd.to_datetime(ff_factors.index, format= '%Y%m%d')
         ff_factors = ff_factors.apply(lambda x: x/ 100)
         self._ff_df = ff_factors
         self.latest_date = str(ff_factors.index[-1].date())

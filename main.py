@@ -1,6 +1,6 @@
 from Logger.config_logger import setup_logger
 from UserSettings.Configuration import RunConfiguration
-from StrategyService.StrategyClass import Strategy
+from StrategyService.Strategies.PCA_Strategy import PCA_Strategy
 from TradeHandlerService.TradingBackends.LemonClass import Lemon
 from TradeHandlerService.TradeData import Portfolio
 from TradeHandlerService.TradeTranslator import TradeHandler
@@ -12,24 +12,24 @@ def main():
 
     settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
-    lemon = Lemon(config.LM_data_key, config.LM_trading_key, config.LM_trading_type)
+    trade_backend = Lemon(config.LM_data_key, config.LM_trading_key, config.LM_trading_type)
 
     portfolio = Portfolio(
-        positions = lemon.get_positions(),
-        trades = lemon.get_trades(),
-        trading_backend=lemon
+        positions = trade_backend.get_positions(),
+        trades = trade_backend.get_trades(),
+        trading_backend=trade_backend
     )
 
     # run strategy
-    config.strategy = "hold"
-    strategy = Strategy(strategy_name = config.strategy,
-                        strategy_params=config.strategy_params,
-                        portfolio = portfolio)
-    strategy.run_strategy_wrapper()
-
-    pf_dict, pf_value = portfolio.get_portfolio()
+    strategy = PCA_Strategy(
+        ratio=0.12,
+        company_pool="S&P500",
+        portfolio_type="tail",
+        factor_estimate_cov=True
+    )
 
     # translate to trade instructions and place orders
+    pf_dict, pf_value = portfolio.get_portfolio()
     trade_handler = TradeHandler()
     trade_handler.create_rebalance_frame(
         portfolio_dict=pf_dict,
@@ -40,10 +40,7 @@ def main():
     trade_handler.create_trade_instructions()
 
     # place orders
-    lemon.place_multi_order(trade_handler.trade_instructions, pf_dict)
-
-    # wait 30 days and repeat
-    logger.info("Cycle ended. Standby for 30 days.")
+    trade_backend.place_multi_order(trade_handler.trade_instructions, pf_dict)
 
 
 

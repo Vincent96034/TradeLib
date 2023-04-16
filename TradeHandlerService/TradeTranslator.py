@@ -7,10 +7,6 @@ logger = setup_logger(__name__)
 class TradeHandler:
     """ A class to handle portfolio rebalancing and generate trade instructions.
 
-    Args:
-        config (RunConfiguration): An object containing the configuration for the run.
-        lemon (Lemon): An object representing the portfolio.
-
     Attributes:
         rebalance_frame (pd.DataFrame): A Pandas DataFrame containing the rebalanced weights,
             the absolute old and new values for each asset, and the change in value for each asset.
