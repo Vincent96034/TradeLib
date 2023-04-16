@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import pandas as pd
-import datetime as dt
+from datetime import datetime as dt
 from typing import Union
 from dateutil.relativedelta import relativedelta
 from sklearn.decomposition import PCA
@@ -37,6 +37,9 @@ class PCA_Strategy(Strategy):
         self.loadings = []
         self.sign_ratio = None
         self.weights = {}
+        self._df_returns = None
+        self._df_factors = None
+        self._covM = None
 
     def _get_returns_data(self, start_date: str, stop_date: Union[str, None] = None, OHLC_spec: str = "Adj Close"):
         cp = self.company_pool
@@ -47,18 +50,18 @@ class PCA_Strategy(Strategy):
         else:
             companies = self.company_pool
         logger.info("Now downloading returns data.")
-        return self.data_service.ticker_data_historic(companies, start=start_date, end=stop_date, pct_change=True)[OHLC_spec]
+        df_returns = self.data_service.ticker_data_historic(companies, start=start_date, end=stop_date, pct_change=True)[OHLC_spec]
+        self._df_returns = df_returns
+        return df_returns.dropna()
 
     def _get_factor_data(self, start_date):
-        return self.famafrench_data.famafrench_data_historic(start_date),\
-                self.famafrench_data.latest_date
-
-    def _estimate_cov(self):
-        pass
+        df_factors = self.famafrench_data.famafrench_data_historic(start_date)
+        self._df_factors = df_factors
+        return df_factors, self.famafrench_data.latest_date
 
     def run_strategy(self, train_period: int = 24):
         ''' Run PCA-Strategy '''
-        start_date = (dt.today() - relativedelta(months=train_period)).strftime('%Y-%M-%d')
+        start_date = (dt.today() - relativedelta(months=train_period)).strftime('%Y-%m-%d')
         # first downlaod factor data and check latest available data
         if self.factor_estimate_cov:
             factor_df, latest_avail_factor_data = self._get_factor_data(start_date=start_date)
@@ -66,17 +69,23 @@ class PCA_Strategy(Strategy):
             latest_avail_factor_data = None
         returns_df = self._get_returns_data(start_date=start_date, stop_date=latest_avail_factor_data)
         # calculate covariance matrix needed for PCA
-        if self.factor_estimate_cov: # redundant
-            covM = self.factor_estimate_cov(X=np.array(returns_df), F=factor_df, K=3)
+        if self.factor_estimate_cov:
+            # fit both datasets to same lenght and calculate covariance matrix
+            factor_df = factor_df.loc[returns_df.index, :]
+            covM = self.estimate_cov_with_factors(
+                X=np.array(returns_df),
+                F=np.array(factor_df.loc[:, ["Mkt-RF", "SMB", "HML"]]),
+                K=3)
         else:
             covM = returns_df.cov()
+        self._covM = covM
         # Calculating PC1 loadings: they express the market sensitivity
         pca = PCA(n_components=1)
         pca.fit(covM)
         loadings = pca.components_[0] # retain 1st Principal Component
         n = math.ceil(len(returns_df.columns) * self.ratio) # number of companies in portfolio
         return self.loadings_to_weights(loadings=loadings,
-                                 col_names=returns_df.columns,
+                                 col_names=list(returns_df.columns),
                                  portfolio_type=self.portfolio_type,
                                  n=n)
         # TODO: symbol or isin?
@@ -100,7 +109,7 @@ class PCA_Strategy(Strategy):
         if portfolio_type == "head":
             pf_loadings = loadings_sorted[0:n]
         elif portfolio_type == "tail":
-            pf_loadings = loadings_sorted[-n, len(col_names)+1]
+            pf_loadings = loadings_sorted[-n:len(col_names)+1]
         else:
             pf_loadings = sorted(hedge_loadings, key=abs, reverse=True)
         # weight each company by its loading to PC1
@@ -108,9 +117,8 @@ class PCA_Strategy(Strategy):
         pf_constituents = [loadings_dict[i] for i in pf_loadings]
         return {symb: w for symb, w in zip(pf_constituents, pf_weights)}
 
-
     @staticmethod
-    def factor_estimate_cov(X, F, K):
+    def estimate_cov_with_factors(X, F, K):
         """ Estimates the covariance matrix based on the Farma & French Factor Model.
 
         Args:

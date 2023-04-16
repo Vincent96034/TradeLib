@@ -40,7 +40,7 @@ class FamaFrench(DataService):
             ff_factors =  pd.read_csv('DataService/DataServices/temp/F-F_Research_Data_Factors_daily.CSV', skiprows = 4)
         try:
             os.remove('DataService/DataServices/temp/fama_french.zip')
-            os.remove('DataService/DataServices/temp/F-F-F_Research_Data_Factors_daily.CSV')
+            os.remove('DataService/DataServices/temp/F-F_Research_Data_Factors_daily.CSV')
         except OSError as e:
             logger.error(f"Could not delete temp files of `Fama & French` data.")
         # process df
