@@ -14,7 +14,54 @@ logger = setup_logger(__name__)
 
 
 class PCA_Strategy(Strategy):
+    """ Class for implementing a PCA-based trading strategy that selects a subset of companies
+        in a given company pool to form a portfolio based on their sensitivity to the first
+        principal component of their returns.
 
+        Args:
+        ratio (float): The ratio of companies to select for the portfolio based on their sensitivity
+            to the first principal component.
+        company_pool (Union[str, list]): The pool of companies from which to select a portfolio. Can
+            be either 'S&P500', 'NASDAQ100' or a list of company tickers. Default is 'S&P500'.
+        portfolio_type (str): The type of portfolio to construct. Can be either 'head', 'tail' or 'hedge'.
+            Default is 'tail'.
+        factor_estimate_cov (bool): Whether to estimate covariance matrix based on Fama-French factors.
+            Default is True.
+        data_service: Object for accessing stock data. Default is YFinance.
+        famafrench_data: Object for accessing Fama-French data. Default is FamaFrench.
+
+        Attributes:
+        name (str): Name of the trading strategy.
+        _valid_inputs (dict): Dictionary containing valid inputs for the company_pool and portfolio_type
+            arguments.
+        ratio (float): The ratio of companies to select for the portfolio based on their sensitivity to
+            the first principal component.
+        company_pool (Union[str, list]): The pool of companies from which to select a portfolio.
+        portfolio_type (str): The type of portfolio to construct.
+        factor_estimate_cov (bool): Whether to estimate covariance matrix based on Fama-French factors.
+        data_service: Object for accessing stock data.
+        famafrench_data: Object for accessing Fama-French data.
+        loadings (list): The loadings on the first principal component of the returns data.
+        sign_ratio (float): The ratio of companies with negative loadings to those with positive loadings.
+        weights (dict): The weights assigned to each company in the portfolio.
+        _df_returns (pd.DataFrame): The returns data of the selected companies.
+        _df_factors (pd.DataFrame): The Fama-French factors data used to estimate covariance matrix.
+        _covM (np.array): The covariance matrix of the returns data.
+
+        Methods:
+        _get_returns_data(start_date: str, stop_date: Union[str, None], OHLC_spec: str) -> pd.DataFrame:
+            Downloads and returns historical stock returns data of companies in the company_pool.
+        _get_factor_data(start_date: str) -> Tuple[pd.DataFrame, str]:
+            Downloads and returns Fama-French factors data.
+        run_strategy(train_period: int = 24) -> dict:
+            Runs the PCA-based trading strategy and returns the weights assigned to each company in the
+            portfolio.
+        loadings_to_weights(loadings: list, col_names: list, portfolio_type: str, n: int) -> dict:
+            Converts the loadings on the first principal component of the returns data to weights assigned
+            to each company in the portfolio.
+        estimate_cov_with_factors(X: np.array, F: np.array, K: int) -> np.array:
+            Estimates the covariance matrix of the returns data using Fama-French factors.
+    """
     def __init__(self,
                  ratio: float = 0.1,
                  company_pool: Union[str, list] = "S&P500",
@@ -60,7 +107,7 @@ class PCA_Strategy(Strategy):
         return df_factors, self.famafrench_data.latest_date
 
     def run_strategy(self, train_period: int = 24):
-        ''' Run PCA-Strategy '''
+        ''' Run PCA-Strategy. '''
         start_date = (dt.today() - relativedelta(months=train_period)).strftime('%Y-%m-%d')
         # first downlaod factor data and check latest available data
         if self.factor_estimate_cov:
@@ -84,12 +131,12 @@ class PCA_Strategy(Strategy):
         pca.fit(covM)
         loadings = pca.components_[0] # retain 1st Principal Component
         n = math.ceil(len(returns_df.columns) * self.ratio) # number of companies in portfolio
-        return self.loadings_to_weights(loadings=loadings,
+        weights = self.loadings_to_weights(loadings=loadings,
                                  col_names=list(returns_df.columns),
                                  portfolio_type=self.portfolio_type,
                                  n=n)
-        # TODO: symbol or isin?
-        # TODO: test this
+        self.weights = weights
+        return weights
 
     @staticmethod
     def loadings_to_weights(loadings: list, col_names: list, portfolio_type: str, n: int):
