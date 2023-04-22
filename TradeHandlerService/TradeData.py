@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Position:
     """ Class representing a stock position. """
-    isin: str
+    asset_id: str
     quantity: int
     buy_price_avg: float
     estimated_price: float
@@ -25,7 +25,7 @@ class Position:
 class Trade:
     """ Class representing a trade. """
     id: str
-    isin: str
+    asset_id: str
     created_at: dt.Datetime
     quantity: Union[int, float]
     price: float

@@ -33,6 +33,12 @@ class RunConfiguration:
         self.LM_trading_type = config["lemon.markets"].get("LM_trading_type") or "paper" # or live
         self._check_LM_settings()
 
+        # load alpaca trading configurations
+        self.AT_secret = os.environ.get("AT_secret") or config["alpaca_trading"].get("AT_secret")
+        self.AT_key = os.environ.get("AT_key") or config["alpaca_trading"].get("AT_key")
+        self.AT_paper = config["alpaca_trading"].get("AT_paper") or True
+        self._check_AT_settings()
+        
     
     def _check_strategy_settings(self) -> None:
         """ Function to check if strategy-settings are valid. """
@@ -57,6 +63,10 @@ class RunConfiguration:
             raise ValueError("LM_trading_key is not set.")
         valid_trading_types = ["paper", "live"]
         if self.LM_trading_type not in valid_trading_types:
-            raise ValueError(f"""LM_trading_type must be one of {valid_trading_types},
-            received {self.LM_trading_type}.""")
+            raise ValueError(f"LM_trading_type must be one of {valid_trading_types},"\
+                             f" received {self.LM_trading_type}.")
+        
+    
+    def _check_AT_settings(self):
+        pass
         

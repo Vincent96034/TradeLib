@@ -12,5 +12,11 @@
         "LM_data_key": "",
         "LM_trading_key": "",
         "LM_trading_type": ""
+    },
+
+    "alpaca_trading": {
+        "AT_secret": "",
+        "AT_key": "",
+        "LM_trading_type": true
     }
 }

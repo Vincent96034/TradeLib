@@ -1,3 +1,11 @@
+"""
+#### DEPRECATED CLASS ####
+
+lemon.markets closed their b2c business and therefore their (paper-) trading
+api is no longer available (effective 30.04.2023).
+"""
+
+
 import pandas as pd
 from lemon import api
 from typing import Optional, Union
@@ -29,6 +37,8 @@ class Lemon(TradeBackend):
             trading_api_token=LM_trading_key,
             env=LM_trading_type
         )
+        raise DeprecationWarning("This class is deprecated."\
+                                 " Please use another trading backend.")
 
 
     def get_bank_statements(self,

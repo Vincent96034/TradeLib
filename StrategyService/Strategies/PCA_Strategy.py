@@ -130,12 +130,14 @@ class PCA_Strategy(Strategy):
         pca = PCA(n_components=1)
         pca.fit(covM)
         loadings = pca.components_[0] # retain 1st Principal Component
+        self.loadings = loadings
         n = math.ceil(len(returns_df.columns) * self.ratio) # number of companies in portfolio
-        weights = self.loadings_to_weights(loadings=loadings,
+        weights, sign_ratio = self.loadings_to_weights(loadings=loadings,
                                  col_names=list(returns_df.columns),
                                  portfolio_type=self.portfolio_type,
                                  n=n)
         self.weights = weights
+        self.sign_ratio = sign_ratio
         return weights
 
     @staticmethod
@@ -162,7 +164,7 @@ class PCA_Strategy(Strategy):
         # weight each company by its loading to PC1
         pf_weights = [abs(i) / sum(list(map(abs, pf_loadings))) for i in pf_loadings]
         pf_constituents = [loadings_dict[i] for i in pf_loadings]
-        return {symb: w for symb, w in zip(pf_constituents, pf_weights)}
+        return {symb: w for symb, w in zip(pf_constituents, pf_weights)}, sign_ratio
 
     @staticmethod
     def estimate_cov_with_factors(X, F, K):
