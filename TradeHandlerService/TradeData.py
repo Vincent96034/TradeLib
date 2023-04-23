@@ -25,26 +25,35 @@ class Position:
 class Trade:
     """ Class representing a trade. """
     id: str
-    asset_id: str
+    asset_id: str # e.g. isin
     created_at: dt.Datetime
-    quantity: Union[int, float]
-    price: float
+    quantity: Optional[Union[int, float]]
+    quantity_type: Optional[str]
+    price: Optional[float]
+    side: Optional[str]
     expires_at: Optional[dt.Datetime]
     isin_title: Optional[str]
     symbol: Optional[str]
     status: Optional[str]
+    order_type: Optional[str]
+    limit_price: Optional[str]
+    stop_price: Optional[str]
+    trail_percent: Optional[float]
+    trail_price: Optional[float]
 
     def get_total_price(self) -> float:
         return self.quantity * self.price
 
 
-@dataclass
+# todo: this is not a dataclass -> transform to normal class and extend functionality
 class Portfolio:
     """ Class to hold the data for trading operations. """
-    positions: List[Position] = field(default_factory=list)
-    trades: List[Trade] = field(default_factory=list)
-    trading_backend: Literal['TradeBackend'] = None
-    total_value: float = field(default_factory=float)
+
+    def __init__(self) -> None:
+        self.positions: List[Position] = []
+        self.trades: List[Trade] = []
+        self.trading_backend: Literal['TradeBackend'] = None
+        self.total_value: float = 0.0
 
     def get_portfolio(self) -> dict:
         """ Retrieves the user's portfolio and its total value.

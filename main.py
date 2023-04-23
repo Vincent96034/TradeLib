@@ -28,13 +28,13 @@ def main():
         factor_estimate_cov=True
     )
 
-    # translate to trade instructions and place orders
+    # translate to trade instructions
     pf_dict, pf_value = portfolio.get_portfolio()
     trade_handler = TradeHandler()
     trade_handler.create_rebalance_frame(
         portfolio_dict=pf_dict,
         portfolio_value=pf_value,
-        w_new = strategy.weights,
+        w_new=strategy.weights,
         add_value=0
     )
     trade_handler.create_trade_instructions()

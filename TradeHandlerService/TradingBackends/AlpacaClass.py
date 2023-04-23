@@ -11,6 +11,9 @@ from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, StopL
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
 from TradeHandlerService.TradeData import Trade, Position
 
+from Logger.config_logger import setup_logger
+logger = setup_logger(__name__)
+
 
 class Alpaca(TradeBackend):
     def __init__(self, AT_secret: str, AT_key: str, AT_paper: str):
@@ -35,9 +38,15 @@ class Alpaca(TradeBackend):
         # todo: return list of custom positions objects
         return self.trading_client.get_all_positions()
     
-    def get_trades(self):
-        # todo: return list of custom order objects
-        return self.trading_client.get_orders()
+    def get_trades(self, order_status: str = "closed") -> list:
+        if order_status == "closed":
+            status = QueryOrderStatus.CLOSED
+        elif order_status == "open":
+            status = QueryOrderStatus.OPEN
+        else:
+            status = QueryOrderStatus.ALL
+        filter = GetOrdersRequest(status=status)
+        return self.trading_client.get_orders(filter)
     
 
     def place_order(self,
@@ -45,7 +54,7 @@ class Alpaca(TradeBackend):
         side: str,
         quantity: Union[int, float],
         quantity_type: str,
-        pf_dict: dict,
+        #pf_dict: dict,
         order_type: str = "market_order",
         **kwargs,
         ) -> dict:
@@ -56,13 +65,14 @@ class Alpaca(TradeBackend):
         elif quantity_type == "value":
             qty = None
             notional = quantity
+        else:
+            raise ValueError("`quantity_type` must be 'amount' or 'value'.")
         order_type_factory = {
             "market_order": self._market_order,
             "limit_order": self._limit_order,
             "stop_order": self._stop_order,
             "trailing_stop_order": self._trailing_stop_order
         }
-        # todo: implement other input params
         # todo: check if enough funds are available
         order_data = order_type_factory.get(order_type)(
                 symbol=symbol,
@@ -80,14 +90,46 @@ class Alpaca(TradeBackend):
                 trail_price=kwargs.get("trail_price"),
                 trail_percent=kwargs.get("trail_percent")
             )
-        response = self.trading_client.submit_order(order_data=order_data)
+        r = self.trading_client.submit_order(order_data=order_data)
         return {
-            "order_id": str(response.id), 
-            "order_obj": response
+            "order_id": str(r.id), 
+            "order_obj": Trade(
+                id = str(r.id),
+                asset_id = str(r.asset_id),
+                created_at = r.created_at,
+                side = r.side.value,
+                symbol = r.symbol,
+                status = r.status.value,
+                order_type = order_type,
+                limit_price = r.limit_price,
+                stop_price = r.stop_price,
+                trail_percent = r.trail_percent,
+                trail_price = r.trail_price
+            )
         }
 
-    def place_multi_order(self):
-        pass
+    def place_multi_order(self, order_list: list, pf_dict: dict) -> dict:
+        order_responses = []
+        for order in order_list:
+            for key in ["symbol", "side", "quantity", "quantity_type"]:
+                if key not in order:
+                    raise ValueError(f"Required key '{key}' is missing.")
+
+            order_response = self.place_order(
+                isin=order.get("symbol"),
+                side=order.get("side"),
+                quantity=order.get("quantity"),
+                quantity_type=order.get("quantity_type"),
+                take_profit=order.get("take_profit"),
+                stop_loss=order.get("stop_loss"),
+                limit_price=order.get("limit_price"),
+                stop_price=order.get("stop_price"),
+                trail_price=order.get("trail_price"),
+                trail_percent=order.get("trail_percent")
+            )
+            order_responses.append(order_response)
+        logger.info(f"Created {len([x for x in order_responses if x is not None])} orders.")
+        return order_responses
 
 
     def _market_order(self, **kwargs):
