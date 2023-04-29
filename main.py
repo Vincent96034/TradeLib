@@ -6,17 +6,18 @@ from TradeHandlerService.TradeData import Portfolio
 from TradeHandlerService.TradeTranslator import TradeHandler
 
 
-
 def main():
     logger = setup_logger(__name__)
 
     settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
-    trade_backend = Lemon(config.LM_data_key, config.LM_trading_key, config.LM_trading_type)
+    trade_backend = Lemon(config.LM_data_key,
+                          config.LM_trading_key,
+                          config.LM_trading_type)
 
     portfolio = Portfolio(
-        positions = trade_backend.get_positions(),
-        trades = trade_backend.get_trades(),
+        positions=trade_backend.get_positions(),
+        trades=trade_backend.get_trades(),
         trading_backend=trade_backend
     )
 
@@ -41,8 +42,6 @@ def main():
 
     # place orders
     trade_backend.place_multi_order(trade_handler.trade_instructions, pf_dict)
-
-
 
 
 if __name__ == "__main__":

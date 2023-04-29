@@ -1,16 +1,16 @@
-import pandas as pd
-from typing import Union, Optional
-
+from typing import Union
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetStatus
 from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import OrderSide, QueryOrderStatus, TimeInForce
-from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, StopLimitOrderRequest, TrailingStopOrderRequest
+from alpaca.trading.requests import (MarketOrderRequest,
+                                     LimitOrderRequest,
+                                     StopLimitOrderRequest,
+                                     TrailingStopOrderRequest)
 
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
-from TradeHandlerService.TradeData import Trade, Position
-
+from TradeHandlerService.TradeData import Trade
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 
@@ -20,13 +20,16 @@ class Alpaca(TradeBackend):
         self.AT_secret = AT_secret
         self.AT_key = AT_key
         self.AT_paper = AT_paper
-        self.trading_client = TradingClient(self.AT_key, self.AT_secret, paper=AT_paper)
-        #self.broker_client = BrokerClient(self.AT_key, self.AT_secret)
+        self.trading_client = TradingClient(
+            self.AT_key,
+            self.AT_secret,
+            paper=AT_paper)
+        # self.broker_client = BrokerClient(self.AT_key, self.AT_secret)
 
     def get_account(self):
         return self.trading_client.get_account()
-    
-    def get_assets(self, active: bool=True, tradeable: bool=True):
+
+    def get_assets(self, active: bool = True, tradeable: bool = True):
         if active:
             asset_status = AssetStatus.ACTIVE
         else:
@@ -37,7 +40,7 @@ class Alpaca(TradeBackend):
     def get_positions(self):
         # todo: return list of custom positions objects
         return self.trading_client.get_all_positions()
-    
+
     def get_trades(self, order_status: str = "closed") -> list:
         if order_status == "closed":
             status = QueryOrderStatus.CLOSED
@@ -45,20 +48,19 @@ class Alpaca(TradeBackend):
             status = QueryOrderStatus.OPEN
         else:
             status = QueryOrderStatus.ALL
-        filter = GetOrdersRequest(status=status)
-        return self.trading_client.get_orders(filter)
-    
+        filter_request = GetOrdersRequest(status=status)
+        return self.trading_client.get_orders(filter_request)
 
     def place_order(self,
-        symbol: str,
-        side: str,
-        quantity: Union[int, float],
-        quantity_type: str,
-        #pf_dict: dict,
-        order_type: str = "market_order",
-        **kwargs,
-        ) -> dict:
-        #todo: input validation and check
+                    symbol: str,
+                    side: str,
+                    quantity: Union[int, float],
+                    quantity_type: str,
+                    # pf_dict: dict,
+                    order_type: str = "market_order",
+                    **kwargs,
+                    ) -> dict:
+        # todo: input validation and check
         if quantity_type == "amount":
             qty = quantity
             notional = None
@@ -75,36 +77,36 @@ class Alpaca(TradeBackend):
         }
         # todo: check if enough funds are available
         order_data = order_type_factory.get(order_type)(
-                symbol=symbol,
-                side=side,
-                qty=qty,
-                notional=notional,
-                time_in_force=kwargs.get("time_in_force") or TimeInForce.DAY,
-                extended_hours=kwargs.get("extended_hours"),
-                client_order_id=kwargs.get("client_order_id"),
-                order_class=kwargs.get("order_class"),
-                take_profit=kwargs.get("take_profit"),
-                stop_loss=kwargs.get("stop_loss"),
-                limit_price=kwargs.get("limit_price"),
-                stop_price=kwargs.get("stop_price"),
-                trail_price=kwargs.get("trail_price"),
-                trail_percent=kwargs.get("trail_percent")
-            )
+            symbol=symbol,
+            side=side,
+            qty=qty,
+            notional=notional,
+            time_in_force=kwargs.get("time_in_force") or TimeInForce.DAY,
+            extended_hours=kwargs.get("extended_hours"),
+            client_order_id=kwargs.get("client_order_id"),
+            order_class=kwargs.get("order_class"),
+            take_profit=kwargs.get("take_profit"),
+            stop_loss=kwargs.get("stop_loss"),
+            limit_price=kwargs.get("limit_price"),
+            stop_price=kwargs.get("stop_price"),
+            trail_price=kwargs.get("trail_price"),
+            trail_percent=kwargs.get("trail_percent")
+        )
         r = self.trading_client.submit_order(order_data=order_data)
         return {
-            "order_id": str(r.id), 
+            "order_id": str(r.id),
             "order_obj": Trade(
-                id = str(r.id),
-                asset_id = str(r.asset_id),
-                created_at = r.created_at,
-                side = r.side.value,
-                symbol = r.symbol,
-                status = r.status.value,
-                order_type = order_type,
-                limit_price = r.limit_price,
-                stop_price = r.stop_price,
-                trail_percent = r.trail_percent,
-                trail_price = r.trail_price
+                id=str(r.id),
+                asset_id=str(r.asset_id),
+                created_at=r.created_at,
+                side=r.side.value,
+                symbol=r.symbol,
+                status=r.status.value,
+                order_type=order_type,
+                limit_price=r.limit_price,
+                stop_price=r.stop_price,
+                trail_percent=r.trail_percent,
+                trail_price=r.trail_price
             )
         }
 
@@ -128,71 +130,71 @@ class Alpaca(TradeBackend):
                 trail_percent=order.get("trail_percent")
             )
             order_responses.append(order_response)
-        logger.info(f"Created {len([x for x in order_responses if x is not None])} orders.")
+        logger.info(
+            f"Created {len([x for x in order_responses if x is not None])} orders.")
         return order_responses
-
 
     def _market_order(self, **kwargs):
         return MarketOrderRequest(
-                        symbol=kwargs.get("symbol"),
-                        qty=kwargs.get("qty"),
-                        notional=kwargs.get("notional"),
-                        side=self._get_side(kwargs.get("side")),
-                        time_in_force=TimeInForce.DAY,
-                        extended_hours=None,
-                        client_order_id=None,
-                        order_class=None,
-                        take_profit=None,
-                        stop_loss=None
-                )
-    
+            symbol=kwargs.get("symbol"),
+            qty=kwargs.get("qty"),
+            notional=kwargs.get("notional"),
+            side=self._get_side(kwargs.get("side")),
+            time_in_force=TimeInForce.DAY,
+            extended_hours=None,
+            client_order_id=None,
+            order_class=None,
+            take_profit=None,
+            stop_loss=None
+        )
+
     def _limit_order(self, **kwargs):
         return LimitOrderRequest(
-                        symbol=kwargs.get("symbol"),
-                        qty=kwargs.get("qty"),
-                        notional=kwargs.get("notional"),
-                        side=self._get_side(kwargs.get("side")),
-                        time_in_force=TimeInForce.DAY,
-                        extended_hours=None,
-                        client_order_id=None,
-                        order_class=None,
-                        take_profit=None,
-                        stop_loss=None,
-                        limit_price=kwargs.get("limit_price")
-                   )
+            symbol=kwargs.get("symbol"),
+            qty=kwargs.get("qty"),
+            notional=kwargs.get("notional"),
+            side=self._get_side(kwargs.get("side")),
+            time_in_force=TimeInForce.DAY,
+            extended_hours=None,
+            client_order_id=None,
+            order_class=None,
+            take_profit=None,
+            stop_loss=None,
+            limit_price=kwargs.get("limit_price")
+        )
 
     def _stop_order(self, **kwargs):
         return StopLimitOrderRequest(
-                        symbol=kwargs.get("symbol"),
-                        qty=kwargs.get("qty"),
-                        notional=kwargs.get("notional"),
-                        side=self._get_side(kwargs.get("side")),
-                        time_in_force=TimeInForce.DAY,
-                        extended_hours=None,
-                        client_order_id=None,
-                        order_class=None,
-                        take_profit=None,
-                        stop_loss=None,
-                        stop_price=kwargs.get("stop_price"),
-                        limit_price=kwargs.get("limit_price")
-                   )
+            symbol=kwargs.get("symbol"),
+            qty=kwargs.get("qty"),
+            notional=kwargs.get("notional"),
+            side=self._get_side(kwargs.get("side")),
+            time_in_force=TimeInForce.DAY,
+            extended_hours=None,
+            client_order_id=None,
+            order_class=None,
+            take_profit=None,
+            stop_loss=None,
+            stop_price=kwargs.get("stop_price"),
+            limit_price=kwargs.get("limit_price")
+        )
 
     def _trailing_stop_order(self, **kwargs):
         return TrailingStopOrderRequest(
-                        symbol=kwargs.get("symbol"),
-                        qty=kwargs.get("qty"),
-                        notional=kwargs.get("notional"),
-                        side=self._get_side(kwargs.get("side")),
-                        time_in_force=TimeInForce.DAY,
-                        extended_hours=None,
-                        client_order_id=None,
-                        order_class=None,
-                        take_profit=None,
-                        stop_loss=None,
-                        trail_price=kwargs.get("trail_price"),
-                        trail_percent=kwargs.get("trail_percent")
-                   )
-    
+            symbol=kwargs.get("symbol"),
+            qty=kwargs.get("qty"),
+            notional=kwargs.get("notional"),
+            side=self._get_side(kwargs.get("side")),
+            time_in_force=TimeInForce.DAY,
+            extended_hours=None,
+            client_order_id=None,
+            order_class=None,
+            take_profit=None,
+            stop_loss=None,
+            trail_price=kwargs.get("trail_price"),
+            trail_percent=kwargs.get("trail_percent")
+        )
+
     @staticmethod
     def _get_side(side: str):
         if side == "buy":

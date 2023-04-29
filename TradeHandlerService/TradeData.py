@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Position:
-    """ Class representing a stock position. """
+    """Class representing a stock position."""
     asset_id: str
     quantity: int
     buy_price_avg: float
@@ -19,13 +19,13 @@ class Position:
 
     def get_estimated_price_total(self) -> float:
         return self.quantity * self.buy_price_avg
-    
+
 
 @dataclass
 class Trade:
-    """ Class representing a trade. """
+    """Class representing a trade."""
     id: str
-    asset_id: str # e.g. isin
+    asset_id: str  # e.g. isin
     created_at: dt.Datetime
     quantity: Optional[Union[int, float]]
     quantity_type: Optional[str]
@@ -45,9 +45,8 @@ class Trade:
         return self.quantity * self.price
 
 
-# todo: this is not a dataclass -> transform to normal class and extend functionality
 class Portfolio:
-    """ Class to hold the data for trading operations. """
+    """Class to hold the data for trading operations."""
 
     def __init__(self) -> None:
         self.positions: List[Position] = []
@@ -59,17 +58,21 @@ class Portfolio:
         """ Retrieves the user's portfolio and its total value.
 
         Returns:
-            Tuple[Dict[str, Dict[str, float]], float]: A tuple containing a dictionary
-                with the user's portfolio where each key is an ISIN and the value is a
-                dictionary with the keys "quantity", "buy_price_avg", "estimated_price_total",
-                "estimated_price", and "w", and the total value of the portfolio.
+            Tuple[Dict[str, Dict[str, float]], float]: A tuple containing a
+                dictionary with the user's portfolio where each key is an ISIN
+                and the value is a dictionary with the keys "quantity",
+                "buy_price_avg", "estimated_price_total", "estimated_price",
+                and "w", and the total value of the portfolio.
         """
         positions = []
         for pos in self.positions:
             positions.append(
-                [pos.isin, pos.quantity, pos.buy_price_avg, pos.get_estimated_price_total(), pos.estimated_price]
+                [pos.isin, pos.quantity, pos.buy_price_avg,
+                    pos.get_estimated_price_total(), pos.estimated_price]
             )
-        positions = pd.DataFrame(positions, columns = ["isin","quantity","buy_price_avg","estimated_price_total","estimated_price"])
+        positions = pd.DataFrame(positions, columns=[
+                                 "isin", "quantity", "buy_price_avg",
+                                 "estimated_price_total", "estimated_price"])
         pf_value = positions["estimated_price_total"].sum()
         positions["w"] = positions["estimated_price_total"] / pf_value
         portfolio = positions.set_index(["isin"]).to_dict(orient="index")
@@ -80,15 +83,10 @@ class Portfolio:
         self.trades = self.trading_backend.get_trades()
 
     def get_total_value(self) -> float:
-        self.total_value = sum([position.estimated_price_total for position in self.positions])
+        self.total_value = sum(
+            [position.estimated_price_total for position in self.positions])
         return self.total_value
-    
+
     def __repr__(self) -> str:
         return f'Portfolio({len(self.positions)} positions, {len(self.trades)} trades, ' \
             f'total_value={self.total_value}, backend={self.trading_backend.__class__.__name__})'
-
-
-
-
-
-

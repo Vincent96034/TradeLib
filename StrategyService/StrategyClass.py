@@ -9,5 +9,5 @@ class Strategy:
         self.weights = {}
 
     def run_strategy(self):
-        ''' Runs the selected strategy. '''
+        """Runs the selected strategy."""
         raise NotImplementedError("Strategy not yet implemented.")

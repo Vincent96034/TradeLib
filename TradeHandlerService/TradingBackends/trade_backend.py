@@ -4,18 +4,18 @@ from TradeHandlerService.TradeData import Position, Trade
 
 
 class TradeBackend:
-    def get_positions(self):
+    def get_positions(self, **kwargs):
         raise NotImplementedError("`get_positions` is not implemented.")
-    
-    def get_trades(self):
+
+    def get_trades(self, **kwargs):
         raise NotImplementedError("`get_trades` is not implemented.")
-    
-    def place_order(self):
+
+    def place_order(self, **kwargs):
         raise NotImplementedError("`place_order` is not implemented.")
-    
-    def place_multi_order(self):
+
+    def place_multi_order(self, **kwargs):
         raise NotImplementedError("`place_multi_order` is not implemented.")
-    
+
     @staticmethod
     def _create_position_object(
         isin: str,
@@ -28,12 +28,17 @@ class TradeBackend:
         """ Create a Position object with the given input values.
 
         Args:
-            isin (str): The International Securities Identification Number (ISIN) for the security.
+            isin (str): The International Securities Identification Number
+                (ISIN) for the security.
             quantity (int): The number of units of the security.
-            buy_price_avg (float): The average price per unit of the security at the time of purchase.
-            estimated_price (float): The estimated price per unit of the security at the time of creation.
-            isin_title (Optional[str]): The title or name of the security, if available.
-            symbol (Optional[str]): The ticker symbol of the security, if available.
+            buy_price_avg (float): The average price per unit of the security
+                at the time of purchase.
+            estimated_price (float): The estimated price per unit of the
+                security at the time of creation.
+            isin_title (Optional[str]): The title or name of the security, if
+                available.
+            symbol (Optional[str]): The ticker symbol of the security, if
+                available.
 
         Returns:
             Position: A Position object initialized with the input values.
@@ -46,7 +51,7 @@ class TradeBackend:
             raise ValueError("`buy_price_avg` must be a positive float.")
         if estimated_price <= 0:
             raise ValueError("`estimated_price` must be a positive float.")
-        
+
         return Position(
             isin=isin,
             quantity=quantity,
@@ -59,7 +64,7 @@ class TradeBackend:
     @staticmethod
     def _create_trade_object(
         id_: str,
-        isin: str,
+        asset_id: str,
         created_at: dt.datetime,
         quantity: Union[int, float],
         price: float,
@@ -68,17 +73,23 @@ class TradeBackend:
         symbol: Optional[str] = None,
         status: Optional[str] = None
     ) -> Trade:
-        """ Create a Trade object with the given input values.
+        """Create a Trade object with the given input values.
 
         Args:
             id (str): The unique identifier for the trade.
-            isin (str): The International Securities Identification Number (ISIN) for the security.
-            created_at (datetime.datetime): The datetime when the trade was created.
-            quantity (Union[int, float]): The number of units of the security to be traded.
+            isin (str): The International Securities Identification Number
+                (ISIN) for the security.
+            created_at (datetime.datetime): The datetime when the trade was
+                created.
+            quantity (Union[int, float]): The number of units of the security
+                to be traded.
             price (float): The price per unit of the security for the trade.
-            expires_at (Optional[datetime.datetime]): The datetime when the trade will expire, if any.
-            isin_title (Optional[str]): The title or name of the security, if available.
-            symbol (Optional[str]): The ticker symbol of the security, if available.
+            expires_at (Optional[datetime.datetime]): The datetime when the
+                trade will expire, if any.
+            isin_title (Optional[str]): The title or name of the security, if
+                available.
+            symbol (Optional[str]): The ticker symbol of the security, if
+                available.
             status (Optional[str]): The status of the trade, if any.
 
         Returns:
@@ -95,11 +106,12 @@ class TradeBackend:
         if price <= 0:
             raise TypeError("`price` must be a positive float.")
         if expires_at and expires_at < created_at:
-            raise TypeError("`expires_at` datetime must be after created at datetime.")
-        
+            raise TypeError(
+                "`expires_at` datetime must be after created at datetime.")
+
         return Trade(
             id=id_,
-            isin=isin,
+            asset_id=asset_id,
             created_at=created_at,
             quantity=quantity,
             price=price,
