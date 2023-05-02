@@ -1,25 +1,22 @@
-from Logger.config_logger import setup_logger
+#from Logger.config_logger import setup_logger
 from UserSettings.Configuration import RunConfiguration
 from StrategyService.Strategies.PCA_Strategy import PCA_Strategy
-from TradeHandlerService.TradingBackends.LemonClass import Lemon
+from TradeHandlerService.TradingBackends.AlpacaClass import Alpaca
 from TradeHandlerService.TradeData import Portfolio
 from TradeHandlerService.TradeTranslator import TradeHandler
 
 
 def main():
-    logger = setup_logger(__name__)
+    #logger = setup_logger(__name__)
 
     settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
-    trade_backend = Lemon(config.LM_data_key,
-                          config.LM_trading_key,
-                          config.LM_trading_type)
+    trade_backend = Alpaca(config.alpaca_secret,
+                          config.alpaca_key,
+                          config.alpaca_paper)
 
-    portfolio = Portfolio(
-        positions=trade_backend.get_positions(),
-        trades=trade_backend.get_trades(),
-        trading_backend=trade_backend
-    )
+    portfolio = Portfolio()
+    portfolio.trading_backend = trade_backend
 
     # run strategy
     strategy = PCA_Strategy(
@@ -41,7 +38,7 @@ def main():
     trade_handler.create_trade_instructions()
 
     # place orders
-    trade_backend.place_multi_order(trade_handler.trade_instructions, pf_dict)
+    trade_backend.place_multi_order(trade_handler.trade_instructions)
 
 
 if __name__ == "__main__":

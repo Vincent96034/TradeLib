@@ -1,4 +1,5 @@
 from typing import Union
+
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetStatus
@@ -12,24 +13,34 @@ from alpaca.trading.requests import (MarketOrderRequest,
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
 from TradeHandlerService.TradeData import Trade
 from Logger.config_logger import setup_logger
+
 logger = setup_logger(__name__)
 
 
 class Alpaca(TradeBackend):
-    def __init__(self, AT_secret: str, AT_key: str, AT_paper: str):
-        self.AT_secret = AT_secret
-        self.AT_key = AT_key
-        self.AT_paper = AT_paper
+    """TradeBackend implementation for Alpaca Trading API."""
+    def __init__(self, alpaca_secret: str, alpaca_key: str, alpaca_paper: str):
+        self.alpaca_secret = alpaca_secret
+        self.alpaca_key = alpaca_key
+        self.alpaca_paper = alpaca_paper
         self.trading_client = TradingClient(
-            self.AT_key,
-            self.AT_secret,
-            paper=AT_paper)
+            api_key = self.alpaca_key,
+            secret_key = self.alpaca_secret,
+            paper=alpaca_paper)
         # self.broker_client = BrokerClient(self.AT_key, self.AT_secret)
 
     def get_account(self):
+        "Method returns AlpacaAccount object."
         return self.trading_client.get_account()
 
-    def get_assets(self, active: bool = True, tradeable: bool = True):
+    def get_assets(self, active: bool = True):
+        """Returns a list of AlpacaAsset objects. This list can include
+        non-tradeable assets.
+        
+        Args:
+            active (bool, optional): Whether to return only the list of active
+                assets. Defaults to True.
+        """
         if active:
             asset_status = AssetStatus.ACTIVE
         else:
@@ -37,11 +48,34 @@ class Alpaca(TradeBackend):
         search_params = GetAssetsRequest(status=asset_status)
         return self.trading_client.get_all_assets(search_params)
 
-    def get_positions(self):
-        # todo: return list of custom positions objects
+    def get_positions(self, **kwargs):
+        """Returns a list of all positions.
+        
+        Returns:
+            list: A list of custom positions objects.
+        """
+        # TODO: return list of custom positions objects
         return self.trading_client.get_all_positions()
 
-    def get_trades(self, order_status: str = "closed") -> list:
+    def get_specific_position(self, asset_or_symbol_id):
+        """Returns the current position for a specific asset/symbol.
+        
+        Args:
+            asset_or_symbol_id: Symbol or asset id to retrieve the position for.
+        """
+        return self.trading_client.get_open_position(asset_or_symbol_id)
+
+    def get_trades(self, order_status: str = "closed", **kwargs) -> list:
+        """Returns a list of all trades filtered by status.
+        
+        Args:
+            order_status (str, optional): The status of the orders to retrieve.
+                Valid values are 'closed', 'open' or 'all'. Defaults to
+                'closed'.
+        
+        Returns:
+            list: A list of Trade objects representing the trades.
+        """
         if order_status == "closed":
             status = QueryOrderStatus.CLOSED
         elif order_status == "open":
@@ -56,11 +90,33 @@ class Alpaca(TradeBackend):
                     side: str,
                     quantity: Union[int, float],
                     quantity_type: str,
-                    # pf_dict: dict,
                     order_type: str = "market_order",
                     **kwargs,
                     ) -> dict:
-        # todo: input validation and check
+        """Function to place an order for a given symbol.
+
+        Args:
+            symbol (str): Symbol of the asset to be traded.
+            side (str): Side of the trade, either 'buy' or 'sell'.
+            quantity (Union[int, float]): Quantity of the asset to be traded.
+            quantity_type (str): Type of the quantity value, either 'amount' or
+                'value'.
+            order_type (str, optional): Type of order, defaults to
+                'market_order'.
+            **kwargs: Additional arguments to customize the order.
+
+        Returns:
+            dict: A dictionary with the order_id and the order_obj as Trade
+                object.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("'isin' must be an string.")
+        if not side in ["buy", "sell"]:
+            raise ValueError("'side' must be either 'buy' or 'sell'.")
+        if not isinstance(quantity, (float, int)):
+            raise TypeError("'quantity' must be an float or integer.")
+        if quantity < 0:
+            raise ValueError("'quantity' must be a positive number.")
         if quantity_type == "amount":
             qty = quantity
             notional = None
@@ -69,14 +125,28 @@ class Alpaca(TradeBackend):
             notional = quantity
         else:
             raise ValueError("`quantity_type` must be 'amount' or 'value'.")
+        ord_type_lst = ["market_order", "limit_order", "stop_order", "trailing_stop_order"]
+        if order_type not in ord_type_lst:
+            raise ValueError(f"`order_type` must be in {ord_type_lst}")
+        if side == "sell":  # check if portfolio holds enough of stock
+            amount_available = 9999999  # TODO: get current amount available
+            if order_amount > amount_available:
+                logger.warning(
+                    "Order quant %s not available in PF.", order_amount)
+                order_amount = amount_available
+        if qty and qty <= 0:
+            logger.warning("Order quant is less than or equal to zero."
+                        "Order will be dismissed %s.", symbol)
+            return {"order_id": None, "order_obj": None}
+
         order_type_factory = {
             "market_order": self._market_order,
             "limit_order": self._limit_order,
             "stop_order": self._stop_order,
             "trailing_stop_order": self._trailing_stop_order
         }
-        # todo: check if enough funds are available
-        order_data = order_type_factory.get(order_type)(
+        order_data = order_type_factory.get(order_type)
+        order_data = order_data(
             symbol=symbol,
             side=side,
             qty=qty,
@@ -92,25 +162,40 @@ class Alpaca(TradeBackend):
             trail_price=kwargs.get("trail_price"),
             trail_percent=kwargs.get("trail_percent")
         )
-        r = self.trading_client.submit_order(order_data=order_data)
+        response = self.trading_client.submit_order(order_data=order_data)
         return {
-            "order_id": str(r.id),
+            "order_id": str(response.id),
             "order_obj": Trade(
-                id=str(r.id),
-                asset_id=str(r.asset_id),
-                created_at=r.created_at,
-                side=r.side.value,
-                symbol=r.symbol,
-                status=r.status.value,
+                trade_id=str(response.id),
+                asset_id=str(response.asset_id),
+                created_at=response.created_at,
+                quantity=None,
+                quantity_type=None,
+                price=None,
+                side=response.side.value,
+                expires_at=None,
+                symbol_title=None,
+                symbol=response.symbol,
+                status=response.status.value,
                 order_type=order_type,
-                limit_price=r.limit_price,
-                stop_price=r.stop_price,
-                trail_percent=r.trail_percent,
-                trail_price=r.trail_price
-            )
+                limit_price=response.limit_price,
+                stop_price=response.stop_price,
+                trail_percent=response.trail_percent,
+                trail_price=response.trail_price)
         }
 
-    def place_multi_order(self, order_list: list, pf_dict: dict) -> dict:
+    def place_multi_order(self, order_list: list) -> dict:
+        """Function to place multiple orders for different symbols.
+
+        Args:
+            order_list (list): A list of orders, where each order is a
+                dictionary containing the following keys: 'symbol', 'side',
+                'quantity', and 'quantity_type'. Additional keys can be added
+                to customize the order.
+
+        Returns:
+            dict: A dictionary containing the response of each order.
+        """
         order_responses = []
         for order in order_list:
             for key in ["symbol", "side", "quantity", "quantity_type"]:
@@ -118,7 +203,7 @@ class Alpaca(TradeBackend):
                     raise ValueError(f"Required key '{key}' is missing.")
 
             order_response = self.place_order(
-                isin=order.get("symbol"),
+                symbol=order.get("symbol"),
                 side=order.get("side"),
                 quantity=order.get("quantity"),
                 quantity_type=order.get("quantity_type"),
@@ -131,10 +216,11 @@ class Alpaca(TradeBackend):
             )
             order_responses.append(order_response)
         logger.info(
-            f"Created {len([x for x in order_responses if x is not None])} orders.")
+            "Created %s orders.", len([x for x in order_responses if x is not None]))
         return order_responses
 
     def _market_order(self, **kwargs):
+        """Create market order object."""
         return MarketOrderRequest(
             symbol=kwargs.get("symbol"),
             qty=kwargs.get("qty"),
@@ -149,6 +235,7 @@ class Alpaca(TradeBackend):
         )
 
     def _limit_order(self, **kwargs):
+        """Create limit order object."""
         return LimitOrderRequest(
             symbol=kwargs.get("symbol"),
             qty=kwargs.get("qty"),
@@ -164,6 +251,7 @@ class Alpaca(TradeBackend):
         )
 
     def _stop_order(self, **kwargs):
+        """Create stop order object."""
         return StopLimitOrderRequest(
             symbol=kwargs.get("symbol"),
             qty=kwargs.get("qty"),
@@ -180,6 +268,7 @@ class Alpaca(TradeBackend):
         )
 
     def _trailing_stop_order(self, **kwargs):
+        """Create trailing stop order object."""
         return TrailingStopOrderRequest(
             symbol=kwargs.get("symbol"),
             qty=kwargs.get("qty"),
@@ -197,9 +286,9 @@ class Alpaca(TradeBackend):
 
     @staticmethod
     def _get_side(side: str):
+        """Get side object from string."""
         if side == "buy":
             return OrderSide.BUY
-        elif side == "sell":
+        if side == "sell":
             return OrderSide.SELL
-        else:
-            raise ValueError(f"`side` must be 'buy' or 'sell', not {side}")
+        raise ValueError(f"`side` must be 'buy' or 'sell', not {side}")

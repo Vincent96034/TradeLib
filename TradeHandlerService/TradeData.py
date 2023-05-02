@@ -1,10 +1,10 @@
 from __future__ import annotations
+from typing import List, Optional, Union
 
+from dataclasses import dataclass
 import datetime as dt
 import pandas as pd
-from typing import List, Optional, Union
 from typing_extensions import Literal
-from dataclasses import dataclass, field
 
 
 @dataclass
@@ -18,13 +18,18 @@ class Position:
     symbol: Optional[str]
 
     def get_estimated_price_total(self) -> float:
+        """Get total estimated price of the position."""
         return self.quantity * self.buy_price_avg
 
+@dataclass
+class Order:
+    """Class representing a order. This is just a base class, every order
+    should also be a trade. A trade can also be an unsuccessful order."""
 
 @dataclass
 class Trade:
-    """Class representing a trade."""
-    id: str
+    """Class representing a trade or order."""
+    trade_id: str
     asset_id: str  # e.g. isin
     created_at: dt.Datetime
     quantity: Optional[Union[int, float]]
@@ -32,7 +37,7 @@ class Trade:
     price: Optional[float]
     side: Optional[str]
     expires_at: Optional[dt.Datetime]
-    isin_title: Optional[str]
+    symbol_title: Optional[str]
     symbol: Optional[str]
     status: Optional[str]
     order_type: Optional[str]
@@ -42,7 +47,32 @@ class Trade:
     trail_price: Optional[float]
 
     def get_total_price(self) -> float:
+        """Get total price of the trade."""
         return self.quantity * self.price
+
+    def __repr__(self) -> str:
+        attrs = {
+            "asset_id": self.asset_id,
+            "created_at": self.created_at,
+            "quantity": self.quantity,
+            "quantity_type": self.quantity_type,
+            "price": self.price,
+            "side": self.side,
+            "expires_at": self.expires_at,
+            "symbol_title": self.symbol_title,
+            "symbol": self.symbol,
+            "status": self.status,
+            "order_type": self.order_type,
+            "limit_price": self.limit_price,
+            "stop_price": self.stop_price,
+            "trail_percent": self.trail_percent,
+            "trail_price": self.trail_price,
+        }
+        parts = [f"<Trade {self.trade_id}"]
+        for attr, value in attrs.items():
+            if value is not None:
+                parts.append(f"{attr}: {value}")
+        return "\n   ".join(parts) + "\n>"
 
 
 class Portfolio:
@@ -55,7 +85,7 @@ class Portfolio:
         self.total_value: float = 0.0
 
     def get_portfolio(self) -> dict:
-        """ Retrieves the user's portfolio and its total value.
+        """Retrieves the user's portfolio and its total value.
 
         Returns:
             Tuple[Dict[str, Dict[str, float]], float]: A tuple containing a
@@ -79,10 +109,12 @@ class Portfolio:
         return portfolio, pf_value
 
     def update(self):
+        """Update portfolio data"""
         self.positions = self.trading_backend.get_positions()
         self.trades = self.trading_backend.get_trades()
 
     def get_total_value(self) -> float:
+        """Get toatal value of the portfolio"""
         self.total_value = sum(
             [position.estimated_price_total for position in self.positions])
         return self.total_value

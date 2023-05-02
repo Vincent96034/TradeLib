@@ -9,14 +9,14 @@
     },
 
     "lemon.markets": {
-        "LM_data_key": "",
-        "LM_trading_key": "",
-        "LM_trading_type": ""
+        "lemon_data_key": "",
+        "lemon_trading_key": "",
+        "lemon_trading_type": ""
     },
 
     "alpaca_trading": {
-        "AT_secret": "",
-        "AT_key": "",
-        "LM_trading_type": true
+        "alpaca_secret": "",
+        "alpaca_key": "",
+        "alpaca_trading_type": true
     }
 }

@@ -13,7 +13,7 @@ class RunConfiguration:
     def __init__(self, dict_source: Union[str, dict]):
         # load usersettings from specified file
         if isinstance(dict_source, str):
-            with open(dict_source) as json_file:
+            with open(dict_source, encoding="utf-8") as json_file:
                 config = json.load(json_file)
         elif isinstance(dict_source, dict):
             config = dict_source
@@ -30,20 +30,20 @@ class RunConfiguration:
         self._check_strategy_settings()
 
         # load lemon.markets-configurations
-        self.LM_data_key = os.environ.get(
-            "LM_data_key") or config["lemon.markets"].get("LM_data_key")
-        self.LM_trading_key = os.environ.get("LM_trading_key") or config.get(
-            "lemon.markets")["LM_trading_key"]
-        self.LM_trading_type = config["lemon.markets"].get(
-            "LM_trading_type") or "paper"  # or live
+        self.lemon_data_key = os.environ.get(
+            "lemon_data_key") or config["lemon.markets"].get("lemon_data_key")
+        self.lemon_trading_key = os.environ.get("lemon_trading_key") or config.get(
+            "lemon.markets")["lemon_trading_key"]
+        self.lemon_trading_type = config["lemon.markets"].get(
+            "lemon_trading_type") or "paper"  # or live
         self._check_LM_settings()
 
         # load alpaca trading configurations
-        self.AT_secret = os.environ.get(
-            "AT_secret") or config["alpaca_trading"].get("AT_secret")
-        self.AT_key = os.environ.get(
-            "AT_key") or config["alpaca_trading"].get("AT_key")
-        self.AT_paper = config["alpaca_trading"].get("AT_paper") or True
+        self.alpaca_secret = os.environ.get(
+            "alpaca_secret") or config["alpaca_trading"].get("alpaca_secret")
+        self.alpaca_key = os.environ.get(
+            "alpaca_key") or config["alpaca_trading"].get("alpaca_key")
+        self.alpaca_paper = config["alpaca_trading"].get("alpaca_paper") or True
         self._check_AT_settings()
 
     def _check_strategy_settings(self) -> None:
@@ -59,20 +59,20 @@ class RunConfiguration:
 
     def _check_LM_settings(self):
         """ Function to check if lemon.markets-configurations are valid. """
-        if not isinstance(self.LM_data_key, str):
+        if not isinstance(self.lemon_data_key, str):
             raise TypeError(
-                f"LM_data_key must be a string, received {type(self.LM_data_key)}.")
-        if self.LM_data_key is None:
+                f"LM_data_key must be a string, received {type(self.lemon_data_key)}.")
+        if self.lemon_data_key is None:
             raise ValueError("LM_data_key is not set.")
-        if not isinstance(self.LM_trading_key, str):
+        if not isinstance(self.lemon_trading_key, str):
             raise TypeError(
-                f"LM_trading_key must be a string, received {type(self.LM_trading_key)}.")
-        if self.LM_trading_key is None:
+                f"LM_trading_key must be a string, received {type(self.lemon_trading_key)}.")
+        if self.lemon_trading_key is None:
             raise ValueError("LM_trading_key is not set.")
         valid_trading_types = ["paper", "live"]
-        if self.LM_trading_type not in valid_trading_types:
+        if self.lemon_trading_type not in valid_trading_types:
             raise ValueError(f"LM_trading_type must be one of {valid_trading_types},"
-                             f" received {self.LM_trading_type}.")
+                             f" received {self.lemon_trading_type}.")
 
     def _check_AT_settings(self):
         pass

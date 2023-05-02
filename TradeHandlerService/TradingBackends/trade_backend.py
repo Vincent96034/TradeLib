@@ -1,19 +1,30 @@
-import datetime as dt
 from typing import Optional, Union
+import datetime as dt
+
 from TradeHandlerService.TradeData import Position, Trade
 
 
 class TradeBackend:
     def get_positions(self, **kwargs):
+        """Get all positions of trading account."""
         raise NotImplementedError("`get_positions` is not implemented.")
 
     def get_trades(self, **kwargs):
+        """Get all trades of trading account."""
         raise NotImplementedError("`get_trades` is not implemented.")
 
-    def place_order(self, **kwargs):
+    def place_order(self,
+                    symbol: str,
+                    side: str,
+                    quantity: Union[int, float],
+                    quantity_type: str,
+                    order_type: str = "market_order",
+                    **kwargs):
+        """Place an order."""
         raise NotImplementedError("`place_order` is not implemented.")
 
-    def place_multi_order(self, **kwargs):
+    def place_multi_order(self, order_list):
+        """Place multiple orders."""
         raise NotImplementedError("`place_multi_order` is not implemented.")
 
     @staticmethod
