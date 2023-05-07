@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+import time
 from typing import Union
 
 from alpaca.trading.client import TradingClient
@@ -27,10 +29,27 @@ class Alpaca(TradeBackend):
             api_key = self.alpaca_key,
             secret_key = self.alpaca_secret,
             paper=alpaca_paper)
-        # self.broker_client = BrokerClient(self.AT_key, self.AT_secret)
+        self.order_type_factory = {
+            "market_order": self._market_order,
+            "limit_order": self._limit_order,
+            "stop_order": self._stop_order,
+            "trailing_stop_order": self._trailing_stop_order
+        }
+
+    def check_market_status(self):
+        """Checks market availability and waits till markets are open."""
+        status = self.trading_client.get_clock()
+        now = datetime.now(timezone.utc)
+        # if market closes in less than 5 minutes or is closed already, wait
+        # till market opens again
+        if ((status.next_close - now).total_seconds() < (5*60)) or (not status.is_open):
+            wait = (status.next_open - datetime.now(timezone.utc)).total_seconds()
+            logger.info("Market is closed or closing soon, waiting %s hours"\
+                " till next open period.", round(wait/(60*60), 2))
+            time.sleep(wait)
 
     def get_account(self):
-        "Method returns AlpacaAccount object."
+        """Method returns AlpacaAccount object."""
         return self.trading_client.get_account()
 
     def get_assets(self, active: bool = True):
@@ -115,8 +134,6 @@ class Alpaca(TradeBackend):
             raise ValueError("'side' must be either 'buy' or 'sell'.")
         if not isinstance(quantity, (float, int)):
             raise TypeError("'quantity' must be an float or integer.")
-        if quantity < 0:
-            raise ValueError("'quantity' must be a positive number.")
         if quantity_type == "amount":
             qty = quantity
             notional = None
@@ -125,27 +142,26 @@ class Alpaca(TradeBackend):
             notional = quantity
         else:
             raise ValueError("`quantity_type` must be 'amount' or 'value'.")
-        ord_type_lst = ["market_order", "limit_order", "stop_order", "trailing_stop_order"]
-        if order_type not in ord_type_lst:
-            raise ValueError(f"`order_type` must be in {ord_type_lst}")
+        ord_type_set = ("market_order", "limit_order", "stop_order", "trailing_stop_order")
+        if order_type not in ord_type_set:
+            raise ValueError(f"`order_type` must be in {ord_type_set}")
         if side == "sell":  # check if portfolio holds enough of stock
-            amount_available = 9999999  # TODO: get current amount available
-            if order_amount > amount_available:
-                logger.warning(
-                    "Order quant %s not available in PF.", order_amount)
-                order_amount = amount_available
-        if qty and qty <= 0:
+            amount_available = self.get_specific_position(symbol)
+            match quantity_type:
+                case "amount":
+                    if qty > float(amount_available.qty_available):
+                        logger.warning("Order quant %s not available in PF.", qty)
+                        qty = float(amount_available.qty_available)
+                case "value":
+                    if notional > float(amount_available.market_value):
+                        logger.warning("Order value %s not available in PF.", notional)
+                        notional = float(amount_available.market_value)
+        if qty and (qty <= 0):
             logger.warning("Order quant is less than or equal to zero."
                         "Order will be dismissed %s.", symbol)
             return {"order_id": None, "order_obj": None}
 
-        order_type_factory = {
-            "market_order": self._market_order,
-            "limit_order": self._limit_order,
-            "stop_order": self._stop_order,
-            "trailing_stop_order": self._trailing_stop_order
-        }
-        order_data = order_type_factory.get(order_type)
+        order_data = self.order_type_factory.get(order_type)
         order_data = order_data(
             symbol=symbol,
             side=side,
@@ -162,6 +178,7 @@ class Alpaca(TradeBackend):
             trail_price=kwargs.get("trail_price"),
             trail_percent=kwargs.get("trail_percent")
         )
+        self.check_market_status()
         response = self.trading_client.submit_order(order_data=order_data)
         return {
             "order_id": str(response.id),
