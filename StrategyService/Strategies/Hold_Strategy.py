@@ -1,5 +1,5 @@
-from StrategyService.StrategyClass import Strategy
-from TradeHandlerService.TradeData import Portfolio
+from StrategyService.strategy_class import Strategy
+from TradeHandlerService.data_objects import Portfolio
 
 
 class Hold_Strategy(Strategy):

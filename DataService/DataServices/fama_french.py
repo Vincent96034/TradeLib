@@ -1,12 +1,13 @@
 import os
 import zipfile
 import urllib.request
-import pandas as pd
 import datetime as dt
 from typing import Union
 from urllib.error import URLError
 
-from DataService.DataService import DataService
+import pandas as pd
+
+from DataService.data_service import DataService
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 

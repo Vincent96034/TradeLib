@@ -36,7 +36,7 @@ class RunConfiguration:
             "lemon.markets")["lemon_trading_key"]
         self.lemon_trading_type = config["lemon.markets"].get(
             "lemon_trading_type") or "paper"  # or live
-        self._check_LM_settings()
+        self._check_lemon_settings()
 
         # load alpaca trading configurations
         self.alpaca_secret = os.environ.get(
@@ -44,7 +44,7 @@ class RunConfiguration:
         self.alpaca_key = os.environ.get(
             "alpaca_key") or config["alpaca_trading"].get("alpaca_key")
         self.alpaca_paper = config["alpaca_trading"].get("alpaca_paper") or True
-        self._check_AT_settings()
+        self._check_alpaca_settings()
 
     def _check_strategy_settings(self) -> None:
         """ Function to check if strategy-settings are valid. """
@@ -57,7 +57,7 @@ class RunConfiguration:
         elif not isinstance(self.strategy_params, dict):
             raise TypeError("`strategy_params` must be a dictionary.")
 
-    def _check_LM_settings(self):
+    def _check_lemon_settings(self):
         """ Function to check if lemon.markets-configurations are valid. """
         if not isinstance(self.lemon_data_key, str):
             raise TypeError(
@@ -74,5 +74,5 @@ class RunConfiguration:
             raise ValueError(f"LM_trading_type must be one of {valid_trading_types},"
                              f" received {self.lemon_trading_type}.")
 
-    def _check_AT_settings(self):
+    def _check_alpaca_settings(self):
         pass

@@ -1,9 +1,9 @@
 #from Logger.config_logger import setup_logger
-from UserSettings.Configuration import RunConfiguration
-from StrategyService.Strategies.PCA_Strategy import PCA_Strategy
-from TradeHandlerService.TradingBackends.AlpacaClass import Alpaca
-from TradeHandlerService.TradeData import Portfolio
-from TradeHandlerService.TradeTranslator import TradeHandler
+from UserSettings.configuration import RunConfiguration
+from StrategyService.Strategies.pca_strategy import PCA_Strategy
+from TradeHandlerService.TradingBackends.alpaca_class import Alpaca
+from TradeHandlerService.data_objects import Portfolio
+from TradeHandlerService.trade_translator import TradeHandler
 
 
 def main():

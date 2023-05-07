@@ -36,7 +36,7 @@ def setup_logger(name: str,
     logger.setLevel(logging_level_switch[level])
 
     if log_path:
-        if log_path == True:
+        if log_path is True:
             log_path = f"Logger/Logs/{name}.log"
         file_handler = logging.FileHandler(log_path)
         file_handler.setFormatter(formatter)

@@ -1,14 +1,14 @@
 import math
-import numpy as np
-import pandas as pd
 from datetime import datetime as dt
 from typing import Union
+import numpy as np
+import pandas as pd
 from dateutil.relativedelta import relativedelta
 from sklearn.decomposition import PCA
 
-from StrategyService.StrategyClass import Strategy
-from DataService.DataServices.YFinance import YFinance
-from DataService.DataServices.FamaFrench import FamaFrench
+from StrategyService.strategy_class import Strategy
+from DataService.DataServices.y_finance import YFinance
+from DataService.DataServices.fama_french import FamaFrench
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 

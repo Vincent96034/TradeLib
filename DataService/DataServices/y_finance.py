@@ -1,8 +1,7 @@
-from typing import Union
 import yfinance as yf
 import pandas as pd
 
-from DataService.DataService import FinancialDataService
+from DataService.data_service import FinancialDataService
 from Logger.config_logger import setup_logger
 logger = setup_logger(__name__)
 

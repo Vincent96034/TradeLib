@@ -3,7 +3,7 @@ import datetime as dt
 from abc import ABC, abstractmethod
 from typing import Optional, Union
 
-from TradeHandlerService.TradeData import Position, Trade
+from TradeHandlerService.data_objects import Position, Trade
 
 
 class TradeBackend(ABC):
