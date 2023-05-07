@@ -14,7 +14,6 @@ def main():
     alpaca = Alpaca(config.alpaca_secret,
                           config.alpaca_key,
                           config.alpaca_paper)
-
     portfolio = Portfolio(trading_backend=alpaca)
 
     # run strategy

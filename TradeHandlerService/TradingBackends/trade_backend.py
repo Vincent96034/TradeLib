@@ -1,18 +1,25 @@
-from typing import Optional, Union
 import datetime as dt
+
+from abc import ABC, abstractmethod
+from typing import Optional, Union
 
 from TradeHandlerService.TradeData import Position, Trade
 
 
-class TradeBackend:
+class TradeBackend(ABC):
+    """Base class for trading backends. Includes all necessary methods."""
+
+    @abstractmethod
     def get_positions(self, **kwargs):
         """Get all positions of trading account."""
         raise NotImplementedError("`get_positions` is not implemented.")
 
+    @abstractmethod
     def get_trades(self, **kwargs):
         """Get all trades of trading account."""
         raise NotImplementedError("`get_trades` is not implemented.")
 
+    @abstractmethod
     def place_order(self,
                     symbol: str,
                     side: str,
@@ -23,6 +30,7 @@ class TradeBackend:
         """Place an order."""
         raise NotImplementedError("`place_order` is not implemented.")
 
+    @abstractmethod
     def place_multi_order(self, order_list):
         """Place multiple orders."""
         raise NotImplementedError("`place_multi_order` is not implemented.")

@@ -1,9 +1,12 @@
+from abc import ABC, abstractmethod
 import pandas as pd
+
 from Logger.config_logger import setup_logger
+
 logger = setup_logger(__name__)
 
 
-class DataService:
+class DataService(ABC):
     def __init__(self):
         # metadata for DataServices
         self.name = None
@@ -14,11 +17,14 @@ class DataService:
         self.day_limit = None
         self.API_KEY = None
 
+    @abstractmethod
     def ticker_data_historic(self, *args, **kwargs):
+        """Get historical ticker data."""
         raise NotImplementedError("Method hasn't been implemented yet.")
 
     @classmethod
     def get_methods(cls):
+        """Returns a list of all methods of a DataService."""
         methods = [attribute for attribute in dir(cls)
                    if callable(getattr(cls, attribute))
                    and attribute.startswith('__') is False]
@@ -43,9 +49,9 @@ class DataService:
 
 
 class FinancialDataService(DataService):
-    def __init__(self):
-        super().__init__()
+    """Base class for data services used for financial data requests."""
 
+    @abstractmethod
     def get_constituents(self, exchange: str):
         """ Get the list of constituents for a given exchange.
 
