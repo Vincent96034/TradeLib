@@ -16,7 +16,6 @@ def main():
                           config.alpaca_paper)
 
     portfolio = Portfolio(trading_backend=alpaca)
-    portfolio.trading_backend = alpaca
 
     # run strategy
     strategy = PCA_Strategy(

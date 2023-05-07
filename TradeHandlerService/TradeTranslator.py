@@ -56,7 +56,7 @@ class TradeHandler:
         w_new_df = pd.DataFrame.from_dict(w_new, orient="index", columns=["w_new"])
         df = pd.concat([w_old_df, w_new_df], axis=1).fillna(0)
         df["abs_old"] = df.loc[:, "w_old"] * portfolio_value
-        df["abs_new"] = df.loc[:, "w_new"] * portfolio_value + add_value
+        df["abs_new"] = df.loc[:, "w_new"] * (portfolio_value + add_value)
         df["delta"] = df.loc[:, "abs_new"] - df.loc[:, "abs_old"]
         self.rebalance_frame = df
         return df
