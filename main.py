@@ -11,34 +11,36 @@ def main():
 
     settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
-    trade_backend = Alpaca(config.alpaca_secret,
+    alpaca = Alpaca(config.alpaca_secret,
                           config.alpaca_key,
                           config.alpaca_paper)
 
-    portfolio = Portfolio()
-    portfolio.trading_backend = trade_backend
+    portfolio = Portfolio(trading_backend=alpaca)
+    portfolio.trading_backend = alpaca
 
     # run strategy
     strategy = PCA_Strategy(
         ratio=0.12,
-        company_pool="S&P500",
+        company_pool="NASDAQ100",
         portfolio_type="tail",
         factor_estimate_cov=True
     )
+    strategy.run_strategy()
 
     # translate to trade instructions
-    pf_dict, pf_value = portfolio.get_portfolio()
     trade_handler = TradeHandler()
     trade_handler.create_rebalance_frame(
-        portfolio_dict=pf_dict,
-        portfolio_value=pf_value,
+        portfolio_dict=portfolio.get_portfolio_weights(),
+        portfolio_value=portfolio.total_value,
         w_new=strategy.weights,
-        add_value=0
+        add_value=50000
     )
     trade_handler.create_trade_instructions()
+    print(trade_handler.rebalance_frame)
+    print(trade_handler.trade_instructions)
 
     # place orders
-    trade_backend.place_multi_order(trade_handler.trade_instructions)
+    alpaca.place_multi_order(trade_handler.trade_instructions)
 
 
 if __name__ == "__main__":

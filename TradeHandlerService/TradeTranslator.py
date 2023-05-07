@@ -30,7 +30,7 @@ class TradeHandler:
                                w_new: dict,
                                add_value: float = 0
                                ) -> pd.DataFrame:
-        """ Rebalances the portfolio based on the old and new weights and the
+        """Rebalances the portfolio based on the old and new weights and the
         current portfolio value.
 
         Args:
@@ -50,9 +50,10 @@ class TradeHandler:
         # pandas df for old portfolio
         w_old_df = pd.DataFrame.from_dict(portfolio_dict, orient="index")
         w_old_df.rename(columns={"w": "w_old"}, inplace=True)
+        w_old_df["asset_id"] = w_old_df.index
+        w_old_df.set_index("symbol", inplace=True)
         # pandas df for new (target portfolio)
-        w_new_df = pd.DataFrame.from_dict(w_new, orient="index")
-        w_new_df.rename(columns={"w": "w_new"}, inplace=True)
+        w_new_df = pd.DataFrame.from_dict(w_new, orient="index", columns=["w_new"])
         df = pd.concat([w_old_df, w_new_df], axis=1).fillna(0)
         df["abs_old"] = df.loc[:, "w_old"] * portfolio_value
         df["abs_new"] = df.loc[:, "w_new"] * portfolio_value + add_value
@@ -67,8 +68,7 @@ class TradeHandler:
         Returns:
         list: A list of dictionaries containing the trade instructions for each
             asset. Each dictionary contains the following keys: 
-                - isin (str): The ISIN (International Securities Identification
-                    Number) of the asset.
+                - symbol (str): 
                 - side (str): The side of the trade, either "buy" or "sell"
                 - quantity (float): The quantity of the asset to trade
                 - quantity_type (str): The quantity type value
@@ -86,7 +86,7 @@ class TradeHandler:
 
         # Calculate absolute values
         df["abs_delta"] = df["delta"].abs()
-        trade_instructions = [{"isin": index,
+        trade_instructions = [{"symbol": index,
                                "side": "buy" if row["delta"] > 0 else "sell",
                                "quantity": abs(row["delta"]),
                                "quantity_type": "value"} for index, row in df.iterrows()]

@@ -13,7 +13,7 @@ from alpaca.trading.requests import (MarketOrderRequest,
                                      TrailingStopOrderRequest)
 
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
-from TradeHandlerService.TradeData import Trade
+from TradeHandlerService.TradeData import Trade, Position
 from Logger.config_logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -33,8 +33,7 @@ class Alpaca(TradeBackend):
             "market_order": self._market_order,
             "limit_order": self._limit_order,
             "stop_order": self._stop_order,
-            "trailing_stop_order": self._trailing_stop_order
-        }
+            "trailing_stop_order": self._trailing_stop_order}
 
     def check_market_status(self):
         """Checks market availability and waits till markets are open."""
@@ -73,8 +72,22 @@ class Alpaca(TradeBackend):
         Returns:
             list: A list of custom positions objects.
         """
-        # TODO: return list of custom positions objects
-        return self.trading_client.get_all_positions()
+        positions = []
+        response = self.trading_client.get_all_positions()
+        for pos in response:
+            positions.append(
+                Position(
+                    asset_id=str(pos.asset_id),
+                    side=pos.side.value,
+                    quantity=float(pos.qty),
+                    qty_available=float(pos.qty_available),
+                    buy_price_avg=float(pos.avg_entry_price),
+                    current_price=float(pos.current_price),
+                    market_value=float(pos.market_value),
+                    symbol=str(pos.symbol),
+                )
+            )
+        return positions
 
     def get_specific_position(self, asset_or_symbol_id):
         """Returns the current position for a specific asset/symbol.
@@ -82,7 +95,17 @@ class Alpaca(TradeBackend):
         Args:
             asset_or_symbol_id: Symbol or asset id to retrieve the position for.
         """
-        return self.trading_client.get_open_position(asset_or_symbol_id)
+        pos = self.trading_client.get_open_position(asset_or_symbol_id)
+        return Position(
+            asset_id=str(pos.asset_id),
+            side=pos.side.value,
+            quantity=float(pos.qty),
+            qty_available=float(pos.qty_available),
+            buy_price_avg=float(pos.avg_entry_price),
+            current_price=float(pos.current_price),
+            market_value=float(pos.market_value),
+            symbol=str(pos.symbol),
+        )
 
     def get_trades(self, order_status: str = "closed", **kwargs) -> list:
         """Returns a list of all trades filtered by status.

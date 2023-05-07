@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Optional, Union
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import datetime as dt
 import pandas as pd
 from typing_extensions import Literal
@@ -11,15 +11,21 @@ from typing_extensions import Literal
 class Position:
     """Class representing a stock position."""
     asset_id: str
-    quantity: int
+    side: str
+    quantity: float
+    qty_available: float
     buy_price_avg: float
-    estimated_price: float
-    isin_title: Optional[str]
+    current_price: float
+    market_value: float
     symbol: Optional[str]
 
-    def get_estimated_price_total(self) -> float:
-        """Get total estimated price of the position."""
-        return self.quantity * self.buy_price_avg
+    def get_rel_performance(self):
+        """Returns the relative performance of the position."""
+        return (self.current_price / self.buy_price_avg) - 1
+
+    def get_abs_performance(self):
+        """Returns the absolute performance of the position."""
+        return self.market_value - (self.buy_price_avg * self.quantity)
 
 @dataclass
 class Order:
@@ -78,46 +84,38 @@ class Trade:
 class Portfolio:
     """Class to hold the data for trading operations."""
 
-    def __init__(self) -> None:
+    def __init__(self, trading_backend) -> None:
         self.positions: List[Position] = []
         self.trades: List[Trade] = []
-        self.trading_backend: Literal['TradeBackend'] = None
+        self.trading_backend: Literal['TradeBackend'] = trading_backend
         self.total_value: float = 0.0
+        self.update()
 
-    def get_portfolio(self) -> dict:
-        """Retrieves the user's portfolio and its total value.
-
-        Returns:
-            Tuple[Dict[str, Dict[str, float]], float]: A tuple containing a
-                dictionary with the user's portfolio where each key is an ISIN
-                and the value is a dictionary with the keys "quantity",
-                "buy_price_avg", "estimated_price_total", "estimated_price",
-                and "w", and the total value of the portfolio.
+    def get_portfolio_weights(self) -> dict:
+        """Retrieves the user's portfolio as a pd.Dataframe.
         """
         positions = []
         for pos in self.positions:
-            positions.append(
-                [pos.isin, pos.quantity, pos.buy_price_avg,
-                    pos.get_estimated_price_total(), pos.estimated_price]
-            )
-        positions = pd.DataFrame(positions, columns=[
-                                 "isin", "quantity", "buy_price_avg",
-                                 "estimated_price_total", "estimated_price"])
-        pf_value = positions["estimated_price_total"].sum()
-        positions["w"] = positions["estimated_price_total"] / pf_value
-        portfolio = positions.set_index(["isin"]).to_dict(orient="index")
-        return portfolio, pf_value
+            positions.append(list(asdict(pos).values()))
+        positions = pd.DataFrame(positions, columns=["asset_id", "side",
+                                    "quantity", "qty_available", "buy_price_avg",
+                                    "current_price", "market_value", "symbol"])
+        pf_value = positions["market_value"].sum()
+        positions["w"] = positions["market_value"] / pf_value
+        portfolio = positions.set_index(["asset_id"]).to_dict(orient="index")
+        return portfolio
+
+    def get_total_value(self) -> float:
+        """Get toatal value of the portfolio"""
+        self.total_value = sum(
+            [position.market_value for position in self.positions])
+        return self.total_value
 
     def update(self):
         """Update portfolio data"""
         self.positions = self.trading_backend.get_positions()
         self.trades = self.trading_backend.get_trades()
-
-    def get_total_value(self) -> float:
-        """Get toatal value of the portfolio"""
-        self.total_value = sum(
-            [position.estimated_price_total for position in self.positions])
-        return self.total_value
+        self.total_value = self.get_total_value()
 
     def __repr__(self) -> str:
         return f'Portfolio({len(self.positions)} positions, {len(self.trades)} trades, ' \
