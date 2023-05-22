@@ -161,6 +161,10 @@ class PCA_Strategy(Strategy):
                             col_names: list,
                             portfolio_type: str,
                             n: int):
+        """Returns portfolio weights based on loading of PC1. Additionally
+        returns the ratio of companies with the same sign of the loging. If not
+        a matority of companies move with the market a warning is raised.
+        """
         # used to be able to construct a portfolio after components initial
         # sorting is lost
         loadings_dict = {i[0]: i[1] for i in zip(loadings, col_names)}
@@ -173,7 +177,7 @@ class PCA_Strategy(Strategy):
             hedge_loadings = loadings[np.where(loadings < 0)]
             loadings = loadings[np.where(loadings >= 0)]
         if abs(sign_ratio - 0.5) < 0.2:
-            logger.warn("No clear majority sign in PC1.")
+            logger.warning("No clear majority sign in PC1.")
         loadings_sorted = sorted(loadings, key=abs, reverse=True)
         if portfolio_type == "head":
             pf_loadings = loadings_sorted[0:n]
@@ -185,7 +189,7 @@ class PCA_Strategy(Strategy):
         pf_weights = [abs(i) / sum(list(map(abs, pf_loadings)))
                       for i in pf_loadings]
         pf_constituents = [loadings_dict[i] for i in pf_loadings]
-        return {symb: w for symb, w in zip(pf_constituents, pf_weights)}, sign_ratio
+        return dict(zip(pf_constituents, pf_weights)), sign_ratio
 
     @staticmethod
     def estimate_cov_with_factors(X, F, K):
@@ -204,7 +208,7 @@ class PCA_Strategy(Strategy):
             https://palomar.home.ece.ust.hk/MAFS6010R_lectures/Rsession_factor_models.html
             https://docs.mosek.com/portfolio-cookbook/factormodels.html
         """
-        N = X.shape[1]  # number of stocks
+        #N = X.shape[1]  # number of stocks
         T = X.shape[0]  # Time
         # Fama French data with intercept
         F_ = np.insert(F, 0, np.ones(T), axis=1)   # (T, K+1)
@@ -226,6 +230,7 @@ class PCA_Strategy(Strategy):
 
     @property
     def ratio(self):
+        """Returns the ratio of companies added to the portfolio."""
         return self._ratio
 
     @ratio.setter
@@ -239,6 +244,7 @@ class PCA_Strategy(Strategy):
 
     @property
     def company_pool(self):
+        """Returns the company pool."""
         return self._company_pool
 
     @company_pool.setter
@@ -258,6 +264,7 @@ class PCA_Strategy(Strategy):
 
     @property
     def portfolio_type(self):
+        """Returns the portfolio type."""
         return self._portfolio_type
 
     @portfolio_type.setter
@@ -271,6 +278,9 @@ class PCA_Strategy(Strategy):
 
     @property
     def factor_estimate_cov(self):
+        """Returns the parameter if the covariance matrix should be estimated
+        using a factor model.
+        """
         return self._factor_estimate_cov
 
     @factor_estimate_cov.setter

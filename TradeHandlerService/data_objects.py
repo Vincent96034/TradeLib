@@ -4,37 +4,78 @@ from typing import List, Optional, Union
 from dataclasses import dataclass, asdict
 import datetime as dt
 import pandas as pd
+import numpy as np
 from typing_extensions import Literal
 
 
 @dataclass
-class Position:
-    """Class representing a stock position."""
+class Asset:
+    """Class representing an asset."""
     asset_id: str
-    side: str
-    quantity: float
-    qty_available: float
-    buy_price_avg: float
+    symbol: Optional[str]
+    symbol_title: Optional[str]
+
+
+@dataclass
+class Order:
+    """Class representing an order."""
+    order_id: str
+    asset: Asset
+    created_at: dt.Datetime
+    quantity: Optional[Union[int, float]]
+    quantity_type: Optional[str]
+    side: Optional[str]
+    expires_at: Optional[dt.Datetime]
+    status: Optional[str]
+    order_type: Optional[str]
+    limit_price: Optional[str]
+    stop_price: Optional[str]
+    trail_percent: Optional[float]
+    trail_price: Optional[float]
+    
+
+@dataclass
+class TradeNEW:
+    """Class representing a trade."""
+    trade_id: str
+    order: Order
+    price: str
+
+
+@dataclass
+class PositionNEW:
+    """Class respresenting an asset position."""
+    asset_id: str
+    trades: List[TradeNEW]
     current_price: float
     market_value: float
     symbol: Optional[str]
 
+    def get_buy_price_avg(self) -> float:
+        """Returns the average buy price of the position. This is used to
+        calculate the performance of a position."""
+        return np.mean([trade.price for trade in self.trades])
+
+    def get_quantity(self):
+        """Returns the total quantity (number of fractional stocks) of the
+        position."""
+        return sum([trade.order.quantity for trade in self.trades])
+
     def get_rel_performance(self):
         """Returns the relative performance of the position."""
-        return (self.current_price / self.buy_price_avg) - 1
+        return (self.current_price / self.get_buy_price_avg) - 1
 
     def get_abs_performance(self):
         """Returns the absolute performance of the position."""
-        return self.market_value - (self.buy_price_avg * self.quantity)
+        return self.market_value - (self.get_buy_price_avg * self.get_quantity)
 
-@dataclass
-class Order:
-    """Class representing a order. This is just a base class, every order
-    should also be a trade. A trade can also be an unsuccessful order."""
+
+
+
 
 @dataclass
 class Trade:
-    """Class representing a trade or order."""
+    """Class representing a trade or an order."""
     trade_id: str
     asset_id: str  # e.g. isin
     created_at: dt.Datetime
@@ -81,6 +122,28 @@ class Trade:
         return "\n   ".join(parts) + "\n>"
 
 
+@dataclass
+class Position:
+    """Class representing a stock position."""
+    asset_id: str
+    side: str
+    quantity: float
+    qty_available: float
+    buy_price_avg: float
+    current_price: float
+    market_value: float
+    symbol: Optional[str]
+
+    def get_rel_performance(self):
+        """Returns the relative performance of the position."""
+        return (self.current_price / self.buy_price_avg) - 1
+
+    def get_abs_performance(self):
+        """Returns the absolute performance of the position."""
+        return self.market_value - (self.buy_price_avg * self.quantity)
+
+
+# TODO: move to portfolio.py
 class Portfolio:
     """Class to hold the data for trading operations."""
 
@@ -92,8 +155,7 @@ class Portfolio:
         self.update()
 
     def get_portfolio_weights(self) -> dict:
-        """Retrieves the user's portfolio as a pd.Dataframe.
-        """
+        """Retrieves the user's portfolio as a pd.Dataframe."""
         positions = []
         for pos in self.positions:
             positions.append(list(asdict(pos).values()))

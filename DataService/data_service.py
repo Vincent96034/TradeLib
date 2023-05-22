@@ -8,6 +8,7 @@ logger = setup_logger(__name__)
 
 class DataService(ABC):
     """Abstract base class for data services."""
+
     def __init__(self):
         # metadata for DataServices
         self.name = None
@@ -17,10 +18,6 @@ class DataService(ABC):
         self.min_limit = None
         self.day_limit = None
         self.API_KEY = None
-
-    def ticker_data_historic(self, *args, **kwargs):
-        """Get historical ticker data."""
-        raise NotImplementedError("Method hasn't been implemented yet.")
 
     @classmethod
     def get_methods(cls):
@@ -48,10 +45,16 @@ class DataService(ABC):
         return f"<DataService: {self.name} ({self.homepage}) - Category {self.data_category}>"
 
 
-class FinancialDataService(DataService):
+class FinancialDataService(DataService, ABC):
     """Base class for data services used for financial data requests."""
 
-    def get_constituents(self, exchange: str):
+    @abstractmethod
+    def ticker_data_historic(self, *args, **kwargs):
+        """Get historical ticker data."""
+        raise NotImplementedError("Method hasn't been implemented yet.")
+    
+    @staticmethod
+    def get_constituents(exchange: str):
         """ Get the list of constituents for a given exchange.
 
         Args:

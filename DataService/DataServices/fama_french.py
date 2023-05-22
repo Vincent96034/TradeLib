@@ -9,6 +9,7 @@ import pandas as pd
 
 from DataService.data_service import DataService
 from Logger.config_logger import setup_logger
+
 logger = setup_logger(__name__)
 
 
@@ -104,7 +105,8 @@ class FamaFrench(DataService):
 
     @staticmethod
     def _validate_date(date_string):
-        """ Validates a date string in 'YYYY-MM-DD' format. """
+        """Validates a date string in 'YYYY-MM-DD' format.
+        """
         if not isinstance(date_string, str):
             raise TypeError("Input must be of type string.")
         try:
