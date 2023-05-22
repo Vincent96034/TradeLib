@@ -1,5 +1,7 @@
 """Module that holds the portfolio class."""
-from __future__ import annotations
+from dataclasses import asdict
+from typing import List
+
 import pandas as pd
 from typing_extensions import Literal
 
