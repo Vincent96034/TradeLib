@@ -14,6 +14,7 @@ class Asset:
     asset_id: str
     symbol: Optional[str]
     symbol_title: Optional[str]
+    asset_class: Optional[str]
 
 
 @dataclass
@@ -32,7 +33,7 @@ class Order:
     stop_price: Optional[str]
     trail_percent: Optional[float]
     trail_price: Optional[float]
-    
+
 
 @dataclass
 class TradeNEW:
@@ -59,7 +60,7 @@ class PositionNEW:
     def get_quantity(self):
         """Returns the total quantity (number of fractional stocks) of the
         position."""
-        return sum([trade.order.quantity for trade in self.trades])
+        return sum(trade.order.quantity for trade in self.trades)
 
     def get_rel_performance(self):
         """Returns the relative performance of the position."""
@@ -68,9 +69,6 @@ class PositionNEW:
     def get_abs_performance(self):
         """Returns the absolute performance of the position."""
         return self.market_value - (self.get_buy_price_avg * self.get_quantity)
-
-
-
 
 
 @dataclass
@@ -95,6 +93,9 @@ class Trade:
 
     def get_total_price(self) -> float:
         """Get total price of the trade."""
+        if (self.quantity is None) or (self.price is None):
+            raise TypeError(
+                "Cannot calculate total price, when either quantity or price is None.")
         return self.quantity * self.price
 
     def __repr__(self) -> str:
@@ -160,8 +161,8 @@ class Portfolio:
         for pos in self.positions:
             positions.append(list(asdict(pos).values()))
         positions = pd.DataFrame(positions, columns=["asset_id", "side",
-                                    "quantity", "qty_available", "buy_price_avg",
-                                    "current_price", "market_value", "symbol"])
+                                                     "quantity", "qty_available", "buy_price_avg",
+                                                     "current_price", "market_value", "symbol"])
         pf_value = positions["market_value"].sum()
         positions["w"] = positions["market_value"] / pf_value
         portfolio = positions.set_index(["asset_id"]).to_dict(orient="index")
@@ -176,7 +177,7 @@ class Portfolio:
     def update(self):
         """Update portfolio data"""
         self.positions = self.trading_backend.get_positions()
-        self.trades = self.trading_backend.get_trades()
+        self.trades = self.trading_backend.get_orders()
         self.total_value = self.get_total_value()
 
     def __repr__(self) -> str:

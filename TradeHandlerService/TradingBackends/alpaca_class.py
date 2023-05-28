@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import time
 from typing import Union
 
+from alpaca.trading.models import Order as AlpacaOrder
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetStatus
@@ -13,7 +14,7 @@ from alpaca.trading.requests import (MarketOrderRequest,
                                      TrailingStopOrderRequest)
 
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
-from TradeHandlerService.data_objects import Trade, Position
+from TradeHandlerService.data_objects import Trade, Position, Asset, Order
 from Logger.config_logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -21,13 +22,14 @@ logger = setup_logger(__name__)
 
 class Alpaca(TradeBackend):
     """TradeBackend implementation for Alpaca Trading API."""
+
     def __init__(self, alpaca_secret: str, alpaca_key: str, alpaca_paper: str):
         self.alpaca_secret = alpaca_secret
         self.alpaca_key = alpaca_key
         self.alpaca_paper = alpaca_paper
         self.trading_client = TradingClient(
-            api_key = self.alpaca_key,
-            secret_key = self.alpaca_secret,
+            api_key=self.alpaca_key,
+            secret_key=self.alpaca_secret,
             paper=alpaca_paper)
         self.order_type_factory = {
             "market_order": self._market_order,
@@ -43,8 +45,8 @@ class Alpaca(TradeBackend):
         # till market opens again
         if ((status.next_close - now).total_seconds() < (5*60)) or (not status.is_open):
             wait = (status.next_open - datetime.now(timezone.utc)).total_seconds()
-            logger.info("Market is closed or closing soon, waiting %s hours"\
-                " till next open period.", round(wait/(60*60), 2))
+            logger.info("Market is closed or closing soon, waiting %s hours"
+                        " till next open period.", round(wait/(60*60), 2))
             time.sleep(wait)
 
     def get_account(self):
@@ -54,7 +56,7 @@ class Alpaca(TradeBackend):
     def get_assets(self, active: bool = True):
         """Returns a list of AlpacaAsset objects. This list can include
         non-tradeable assets.
-        
+
         Args:
             active (bool, optional): Whether to return only the list of active
                 assets. Defaults to True.
@@ -68,7 +70,7 @@ class Alpaca(TradeBackend):
 
     def get_positions(self, **kwargs):
         """Returns a list of all positions.
-        
+
         Returns:
             list: A list of custom positions objects.
         """
@@ -91,7 +93,7 @@ class Alpaca(TradeBackend):
 
     def get_specific_position(self, asset_or_symbol_id):
         """Returns the current position for a specific asset/symbol.
-        
+
         Args:
             asset_or_symbol_id: Symbol or asset id to retrieve the position for.
         """
@@ -107,14 +109,26 @@ class Alpaca(TradeBackend):
             symbol=str(pos.symbol),
         )
 
-    def get_trades(self, order_status: str = "closed", **kwargs) -> list:
+    def get_specific_order(self, order_id):
+        """Retrieves a specific order by its ID.
+
+        Args:
+            order_id (str): The ID of the order to retrieve.
+
+        Returns:
+            Order: A TradeLib Order object representing the specific order.
+        """
+        alpaca_order = self.trading_client.get_order_by_id(order_id=order_id)
+        return self._create_order_obj(alpaca_order)
+
+    def get_orders(self, order_status: str = "closed", **kwargs) -> list:
         """Returns a list of all trades filtered by status.
-        
+
         Args:
             order_status (str, optional): The status of the orders to retrieve.
                 Valid values are 'closed', 'open' or 'all'. Defaults to
                 'closed'.
-        
+
         Returns:
             list: A list of Trade objects representing the trades.
         """
@@ -165,7 +179,8 @@ class Alpaca(TradeBackend):
             notional = quantity
         else:
             raise ValueError("`quantity_type` must be 'amount' or 'value'.")
-        ord_type_set = ("market_order", "limit_order", "stop_order", "trailing_stop_order")
+        ord_type_set = ("market_order", "limit_order",
+                        "stop_order", "trailing_stop_order")
         if order_type not in ord_type_set:
             raise ValueError(f"`order_type` must be in {ord_type_set}")
         if side == "sell":  # check if portfolio holds enough of stock
@@ -173,15 +188,17 @@ class Alpaca(TradeBackend):
             match quantity_type:
                 case "amount":
                     if qty > float(amount_available.qty_available):
-                        logger.warning("Order quant %s not available in PF.", qty)
+                        logger.warning(
+                            "Order quant %s not available in PF.", qty)
                         qty = float(amount_available.qty_available)
                 case "value":
                     if notional > float(amount_available.market_value):
-                        logger.warning("Order value %s not available in PF.", notional)
+                        logger.warning(
+                            "Order value %s not available in PF.", notional)
                         notional = float(amount_available.market_value)
         if qty and (qty <= 0):
             logger.warning("Order quant is less than or equal to zero."
-                        "Order will be dismissed %s.", symbol)
+                           "Order will be dismissed %s.", symbol)
             return {"order_id": None, "order_obj": None}
 
         order_data = self.order_type_factory.get(order_type)
@@ -332,3 +349,26 @@ class Alpaca(TradeBackend):
         if side == "sell":
             return OrderSide.SELL
         raise ValueError(f"`side` must be 'buy' or 'sell', not {side}")
+
+    @staticmethod
+    def _create_order_obj(order: AlpacaOrder):
+        """Returns TradeLib Order object from Alpaca Order object."""
+        return Order(
+            order_id=str(order.id),
+            asset=Asset(
+                asset_id=str(order.asset_id),
+                symbol=order.symbol,
+                symbol_title=None,
+                asset_class=order.asset_class.value),
+            created_at=order.created_at,
+            quantity=float(order.filled_qty),
+            quantity_type="amount" if order.notional is None else "value",
+            side=order.side.value,
+            expires_at=order.expired_at,
+            status=order.status.value,
+            order_type=order.order_type.value,
+            stop_price=order.stop_price,
+            limit_price=None,
+            trail_percent=order.trail_percent,
+            trail_price=order.trail_price,
+        )

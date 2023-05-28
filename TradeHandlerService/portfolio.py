@@ -43,7 +43,7 @@ class Portfolio(metaclass = Singleton):
     def update(self):
         """Update portfolio data"""
         self.positions = self.trading_backend.get_positions()
-        self.trades = self.trading_backend.get_trades()
+        self.trades = self.trading_backend.get_orders() # TODO: naming: trades/orders
         self.total_value = self.get_total_value()
 
     def __repr__(self) -> str:
