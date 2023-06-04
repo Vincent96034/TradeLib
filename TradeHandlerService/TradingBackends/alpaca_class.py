@@ -13,8 +13,8 @@ from alpaca.trading.requests import (MarketOrderRequest,
                                      StopLimitOrderRequest,
                                      TrailingStopOrderRequest)
 
+from TradeHandlerService.data_model import Trade, Position, Asset, Order
 from TradeHandlerService.TradingBackends.trade_backend import TradeBackend
-from TradeHandlerService.data_objects import Trade, Position, Asset, Order
 from Logger.config_logger import setup_logger
 
 logger = setup_logger(__name__)
