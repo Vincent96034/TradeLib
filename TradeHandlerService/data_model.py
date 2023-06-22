@@ -101,6 +101,18 @@ class Position(Base):
     current_price: Mapped[float | None] = mapped_column(default=None)
     market_value: Mapped[float | None] = mapped_column(default=None)
 
+    def to_dict(self):
+        """Creates a dictionary of the Position Object."""
+        return {
+            "position_id": self.position_id,
+            "asset_id": self.asset.asset_id,
+            "symbol": self.asset.symbol,
+            "symbol_title": self.asset.symbol_title,
+            "asset_class": self.asset.asset_class,
+            "current_price": self.current_price,
+            "market_value": self.market_value
+        }
+
 
 # Create the engine and tables
 engine = create_engine("sqlite:///Database/mydb.sqlite")
