@@ -208,7 +208,7 @@ class PCA_Strategy(Strategy):
             https://palomar.home.ece.ust.hk/MAFS6010R_lectures/Rsession_factor_models.html
             https://docs.mosek.com/portfolio-cookbook/factormodels.html
         """
-        #N = X.shape[1]  # number of stocks
+        # N = X.shape[1]  # number of stocks
         T = X.shape[0]  # Time
         # Fama French data with intercept
         F_ = np.insert(F, 0, np.ones(T), axis=1)   # (T, K+1)

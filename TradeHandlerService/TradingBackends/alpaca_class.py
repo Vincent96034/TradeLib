@@ -72,7 +72,7 @@ class Alpaca(TradeBackend):
             list: A list of custom positions objects.
         """
         response = self.trading_client.get_all_positions()
-        return [self._create_position_obj(alpaca_position) for alpaca_position in response]
+        return [self._create_position_obj(alpaca_pos) for alpaca_pos in response]
 
     def get_specific_position(self, asset_or_symbol_id):
         """Returns the current position for a specific asset/symbol.
@@ -122,11 +122,11 @@ class Alpaca(TradeBackend):
         """Decorator for the place_order function to check input args."""
         if not isinstance(kwargs.get("symbol"), str):
             raise TypeError("'isin' must be an string.")
-        if not kwargs.get("side") in ["buy", "sell"]:
+        if kwargs.get("side") not in ["buy", "sell"]:
             raise ValueError("'side' must be either 'buy' or 'sell'.")
         if not isinstance(kwargs.get("quantity"), (float, int)):
             raise TypeError("'quantity' must be an float or integer.")
-        if not kwargs.get("quantity_type") in ["amount", "value"]:
+        if kwargs.get("quantity_type") not in ["amount", "value"]:
             raise ValueError("`quantity_type` must be 'amount' or 'value'")
         ord_type_set = ("market_order", "limit_order",
                         "stop_order", "trailing_stop_order")
