@@ -1,4 +1,5 @@
 import os
+import sys
 import zipfile
 import urllib.request
 import datetime as dt
@@ -41,7 +42,10 @@ class FamaFrench(DataService):
         except URLError as url_e:
             logger.error(
                 "An URL-Error occured when downloading `Fama & French` data: %s", url_e)
-        # open zip file in temp folder, create .csv, create pandas df, delete files again
+            logger.error(
+                "Fama French data could not be downloaded. Terminating Program.")
+            sys.exit()
+        # open zip file in temp folder, create .csv, create pandas df, delete files
         with zipfile.ZipFile('DataService/DataServices/temp/fama_french.zip', 'r') as z_file:
             z_file.extractall("DataService/DataServices/temp/")
             ff_factors = pd.read_csv(
@@ -99,14 +103,13 @@ class FamaFrench(DataService):
             self._validate_date(start)
         if stop:
             self._validate_date(stop)
-        if self._ff_df.empty or (update):
+        if self._ff_df.empty or update:
             self._download_and_prepare_data()
         return self._ff_df.loc[start:stop]
 
     @staticmethod
     def _validate_date(date_string):
-        """Validates a date string in 'YYYY-MM-DD' format.
-        """
+        """Validates a date string in 'YYYY-MM-DD' format."""
         if not isinstance(date_string, str):
             raise TypeError("Input must be of type string.")
         try:
