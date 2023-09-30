@@ -8,7 +8,7 @@ from Logger.config_logger import setup_logger
 
 
 def main():
-    """default run"""
+    """Default run"""
     logger = setup_logger(__name__)
 
     settings_source = "usersettings.json"
