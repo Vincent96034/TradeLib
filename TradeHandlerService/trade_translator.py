@@ -55,7 +55,8 @@ class TradeHandler:
         w_old_df["asset_id"] = w_old_df.index
         w_old_df.set_index("symbol", inplace=True)
         # pandas df for new (target portfolio)
-        w_new_df = pd.DataFrame.from_dict(w_new, orient="index", columns=["w_new"])
+        w_new_df = pd.DataFrame.from_dict(
+            w_new, orient="index", columns=["w_new"])
         df = pd.concat([w_old_df, w_new_df], axis=1).fillna(0)
         df["abs_old"] = df.loc[:, "w_old"] * portfolio_value
         df["abs_new"] = df.loc[:, "w_new"] * (portfolio_value + add_value)
