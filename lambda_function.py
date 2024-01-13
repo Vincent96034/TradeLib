@@ -1,5 +1,5 @@
 import json
-from main import main
+from main_pca import main
 
 
 def lambda_handler(event, context):

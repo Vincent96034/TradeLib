@@ -13,6 +13,9 @@ def main():
 
     settings_source = "usersettings.json"
     config = RunConfiguration(settings_source)
+
+    print(config.alpaca_secret)
+
     alpaca = Alpaca(config.alpaca_secret,
                     config.alpaca_key,
                     config.alpaca_paper)

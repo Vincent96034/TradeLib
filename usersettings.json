@@ -3,17 +3,14 @@
         "name": "hold",
         "params": {}
     },
-
     "environment": {
-        "env_path": "/Users/vincenthaunberger/Documents/PYTHON/PROJECTS/TradeLib/keys.env"
+        "env_path": "/Users/fynnschroder/Documents/03_Coding/01_Python/tradelib/TradeLib/keys.env"
     },
-
     "lemon.markets": {
         "lemon_data_key": "",
         "lemon_trading_key": "",
         "lemon_trading_type": ""
     },
-
     "alpaca_trading": {
         "alpaca_secret": "",
         "alpaca_key": "",
