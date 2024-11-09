@@ -1,7 +1,7 @@
 # Custom
 /keys.env
-dev.ipynb
-dev2.ipynb
+.env
+dev*
 /Logger/Logs/
 temp/
 .DS_Store
