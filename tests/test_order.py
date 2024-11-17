@@ -137,7 +137,7 @@ def test_trade_creation_defaults(basic_trade):
     assert basic_trade.execution_price == 150.0
     assert basic_trade.execution_quantity == 100.0
     assert basic_trade.fees == 0.0
-    assert isinstance(basic_trade.execution_time, datetime)
+    assert isinstance(basic_trade.timestamp, datetime)
     assert isinstance(basic_trade.metadata, dict)
 
 
