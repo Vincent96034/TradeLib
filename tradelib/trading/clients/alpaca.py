@@ -264,7 +264,7 @@ class Alpaca(TradeBackend):
                 execution_quantity=float(order.metadata.get("filled_qty")),
                 quantity_mode=QuantityMode.SHARES,
                 id=order.id,
-                execution_time=order.metadata.get("filled_at"),
+                timestamp=order.metadata.get("filled_at"),
                 fees=0.0 if self.paper else self.order_fee,
                 metadata=order.metadata,
             )

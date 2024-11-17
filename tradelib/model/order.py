@@ -7,6 +7,40 @@ from .enums import OrderSide, OrderStatus, OrderType, QuantityMode
 
 
 @dataclass
+class CashFlow:
+    amount: float  # Positive for inflow, negative for outflow
+    timestamp: datetime = field(default_factory=datetime.now)
+    id: Optional[str] = None
+    metadata: Dict[str, any] = field(default_factory=dict)
+
+    def __repr__(self):
+        return f"CashFlow({abs(self.amount)} @ {self.timestamp})"
+
+
+@dataclass
+class Deposit(CashFlow):
+    def __repr__(self):
+        action = "Deposit" if self.amount > 0 else "Withdrawal"
+        return f"{action}({self.amount} @ {self.timestamp})"
+
+
+@dataclass
+class Interest(Deposit):
+    def __repr__(self):
+        return f"Interest({self.amount} @ {self.timestamp})"
+
+
+@dataclass
+class Dividend(Deposit):
+    def __post_init__(self):
+        if self.amount < 0:
+            raise ValueError("Dividend amount cannot be negative")
+
+    def __repr__(self):
+        return f"Dividend({self.amount} @ {self.timestamp})"
+
+
+@dataclass
 class Order:
     asset: Asset
     quantity: float
@@ -57,7 +91,7 @@ class Trade:
     execution_quantity: float
     quantity_mode: QuantityMode = QuantityMode.NOTIONAL
     id: Optional[str] = None
-    execution_time: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=datetime.now)
     fees: float = 0.0
     metadata: Dict[str, any] = field(default_factory=dict)
 
@@ -66,9 +100,9 @@ class Trade:
         return self.execution_price * self.execution_quantity + self.fees
 
     def validate(self) -> None:
-        if self.execution_quantity < 0:
+        if self.execution_quantity <= 0:
             raise ValueError("Trade quantity must be positive")
-        if self.execution_price < 0:
+        if self.execution_price <= 0:
             raise ValueError("Trade price must be positive")
         if self.fees < 0:
             raise ValueError("Trade fees must be non-negative")
@@ -77,7 +111,7 @@ class Trade:
         self.validate()
 
     def __repr__(self):
-        return f"Trade({self.order} @ {self.execution_price} (qty: {self.execution_quantity}) [{self.execution_time}])"
+        return f"Trade({self.order} @ {self.execution_price} (qty: {self.execution_quantity}) [{self.timestamp}])"
 
 
 @dataclass
