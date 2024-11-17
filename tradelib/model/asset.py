@@ -49,3 +49,10 @@ class Crypto(Asset):
     def __post_init__(self):
         super().__post_init__()
         self.asset_type = "Crypto"
+
+
+@dataclass(kw_only=True)
+class Fund(Asset):
+    def __post_init__(self):
+        super().__post_init__()
+        self.asset_type = "Fund"

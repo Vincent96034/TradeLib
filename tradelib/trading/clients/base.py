@@ -25,7 +25,7 @@ class TradeBackend(ABC):
     @abstractmethod
     def get_orders(self, **kwargs) -> List[Order]:
         """Get all trades of trading account."""
-        raise NotImplementedError("`get_trades` is not implemented.")
+        raise NotImplementedError("`get_orders` is not implemented.")
 
     @abstractmethod
     def get_trades(self, **kwargs) -> List[Trade]:

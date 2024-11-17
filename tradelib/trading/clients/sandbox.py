@@ -134,7 +134,7 @@ class SandboxBackend(TradeBackend):
                 order=order,
                 execution_price=execution_price,
                 execution_quantity=order.quantity,
-                execution_time=datetime.utcnow(),
+                timestamp=datetime.utcnow(),
                 fees=fees,
                 id=trade_id,
             )
