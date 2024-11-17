@@ -1,13 +1,3 @@
-# Custom
-/keys.env
-.env
-dev*
-/Logger/Logs/
-temp/
-.DS_Store
-Database/
-dev.py
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
@@ -39,3 +29,15 @@ pip-delete-this-directory.txt
 .cache
 nosetests.xml
 coverage.xml
+
+
+# Custom
+/keys.env
+.env
+dev*
+/Logger/Logs/
+temp/
+.DS_Store
+Database/
+notes.txt
+dev.py
