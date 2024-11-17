@@ -1,54 +1,119 @@
 from abc import ABC, abstractmethod
 import pandas as pd
+from enum import Enum
+from typing import Any, Dict, Optional
 
 from tradelib.utils.config_logger import setup_logger
 
 logger = setup_logger(__name__)
 
 
+class DataType(Enum):
+    HISTORICAL = "historical"
+    LIVE = "live"
+    FUNDAMENTALS = "fundamentals"
+    NEWS = "news"
+    FACTOR = "factor"
+
+
 class DataService(ABC):
-    """Abstract base class for data services."""
+    data_type: DataType
 
-    def __init__(self):
-        # metadata for DataServices
-        self.name = None
-        self.homepage = None
-        self.data_category = None
-        self.data_types = None
-        self.min_limit = None
-        self.day_limit = None
-        self.API_KEY = None
+    @abstractmethod
+    def get(self, *args, **kwargs) -> Any:
+        """
+        Abstract method to retrieve data. Specific subclasses will implement this method.
+        """
+        pass
 
-    @classmethod
-    def get_methods(cls):
-        """Returns a list of all methods of a DataService."""
-        methods = [
-            attribute
-            for attribute in dir(cls)
-            if callable(getattr(cls, attribute)) and attribute.startswith("__") is False
-        ]
-        return methods
 
-    @staticmethod
-    def check_output_frame(func):
-        """Decorator function to check output of methods for na-values."""
+class PriceDataService(DataService, ABC):
+    data_type: DataType = DataType.HISTORICAL
 
-        def wrapper(*args, **kwargs):
-            res = func(*args, **kwargs)
-            if isinstance(res, pd.DataFrame):
-                na_columns = res.columns[res.isnull().any()].to_list()
-                if na_columns:
-                    logger.warning(
-                        "The output dataframe contains empty values"
-                        " in the columns %s",
-                        na_columns,
-                    )
-            return res
+    @abstractmethod
+    def get(
+        self,
+        symbol: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        Retrieve historical price data for a given symbol within a date range.
+        :param symbol: Asset symbol for which data is requested.
+        :param start_date: Start date for the historical data.
+        :param end_date: End date for the historical data.
+        :return: A DataFrame containing historical price data.
+        """
+        pass
 
-        return wrapper
 
-    def __repr__(self):
-        return f"<DataService: {self.name} ({self.homepage}) - Category {self.data_category}>"
+class LivePriceDataService(DataService, ABC):
+    data_type: DataType = DataType.LIVE
+
+    @abstractmethod
+    def get(self, symbol: str, **kwargs) -> float:
+        """
+        Retrieve the current live price for a given asset symbol.
+        :param symbol: Asset symbol for which live price is requested.
+        :return: The current price of the asset.
+        """
+        pass
+
+
+class FundamentalsDataService(DataService, ABC):
+    data_type: DataType = DataType.FUNDAMENTALS
+
+    @abstractmethod
+    def get(self, symbol: str, **kwargs) -> Dict[str, Any]:
+        """
+        Retrieve fundamental data for a given asset symbol.
+        :param symbol: Asset symbol for which fundamental data is requested.
+        :return: A dictionary containing fundamental data.
+        """
+        pass
+
+
+class NewsDataService(DataService, ABC):
+    data_type: DataType = DataType.NEWS
+
+    @abstractmethod
+    def get(
+        self,
+        symbol: str,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        Retrieve news articles or headlines related to a given asset symbol.
+        :param symbol: Asset symbol for which news data is requested.
+        :param start_date: Start date for filtering news data.
+        :param end_date: End date for filtering news data.
+        :return: A DataFrame containing news data.
+        """
+        pass
+
+
+class FactorDataService(DataService, ABC):
+    data_type: DataType = DataType.FACTOR
+
+    @abstractmethod
+    def get(
+        self,
+        factors: Optional[list] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        Retrieve factor data, such as Fama-French factors.
+        :param factors: List of factor names to retrieve.
+        :param start_date: Start date for filtering factor data.
+        :param end_date: End date for filtering factor data.
+        :return: A DataFrame containing factor data.
+        """
+        pass
 
 
 class FinancialDataService(DataService, ABC):
